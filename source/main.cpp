@@ -17,11 +17,11 @@ std::string buffer;
 // Formatted printing that obeys the '\n' character. GRRLIB's print does not actually handle this correctly.
 static void FormattedTextPrint(int initial_x, int initial_y, GRRLIB_texImg* const bitmap, int font_height, int font_color, float zoom)
 {
-    std::vector<std::string> vec = split(buffer, '\n');
+    std::vector<std::string> vec = SplitString(buffer, '\n');
 
     for (std::string& str : vec)
     {
-        trim_left_in_place(str);
+        TrimStringLeft(str);
         GRRLIB_Printf(initial_x, initial_y, bitmap, font_color, zoom, str.c_str());
 
         // + 2 is used as a little bit of leeway in terms of vertical line separation.

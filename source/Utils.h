@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-inline std::vector<std::string>& split(const std::string& s, char delim, std::vector<std::string>& elems)
+inline std::vector<std::string>& SplitString(const std::string& s, char delim, std::vector<std::string>& elems)
 {
     std::stringstream ss(s);
     std::string item;
@@ -18,14 +18,14 @@ inline std::vector<std::string>& split(const std::string& s, char delim, std::ve
     return elems;
 }
 
-inline std::vector<std::string> split(const std::string& s, char delim)
+inline std::vector<std::string> SplitString(const std::string& s, char delim)
 {
     std::vector<std::string> elems;
-    split(s, delim, elems);
+    SplitString(s, delim, elems);
     return elems;
 }
 
-inline std::string& trim_left_in_place(std::string& str)
+inline std::string& TrimStringLeft(std::string& str)
 {
     size_t i = 0;
 
