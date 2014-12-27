@@ -8,7 +8,7 @@ however, it's fine in the meantime for visually comparing against hardware.
 
 ## Building it
 
-1. Install GRRLIB ([here](http://grrlib.santo.fr/wiki/wikka.php?wakka=HomePage)) into your libogc folder.
+1. Install devkitPPC
 2. Just run make.
 
 ## Example

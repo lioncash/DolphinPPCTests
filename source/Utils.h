@@ -2,38 +2,7 @@
 
 #include <cstdarg>
 #include <cstdlib>
-#include <stdio.h>
-#include <sstream>
 #include <string>
-#include <vector>
-
-inline std::vector<std::string>& SplitString(const std::string& s, char delim, std::vector<std::string>& elems)
-{
-    std::stringstream ss(s);
-    std::string item;
-
-    while (std::getline(ss, item, delim))
-        elems.push_back(item);
-
-    return elems;
-}
-
-inline std::vector<std::string> SplitString(const std::string& s, char delim)
-{
-    std::vector<std::string> elems;
-    SplitString(s, delim, elems);
-    return elems;
-}
-
-inline std::string& TrimStringLeft(std::string& str)
-{
-    size_t i = 0;
-
-    while (i < str.size() && isspace(str[i]))
-        i++;
-
-    return str.erase(0, i);
-}
 
 inline std::string StringFromFormat(const char* format, ...)
 {
