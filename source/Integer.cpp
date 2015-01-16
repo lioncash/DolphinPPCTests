@@ -5,6 +5,11 @@
 #include "tests.h"
 #include "Utils.h"
 
+//
+// TODO: Dump the state of the condition registers as well.
+//       Can help with uncovering flag setting bugs.
+//
+
 static u32 GetXER()
 {
     u32 xer;
@@ -46,8 +51,21 @@ static u32 GetCR()
     printf("%-8s :: rD 0x%08X | rA 0x%08X | rB 0x%08X | XER: 0x%08X\n", inst, output, rA, rB, GetXER()); \
 }
 
+// Test for a 3-component instruction, where the third component is an immediate.
+#define OPTEST_3_COMPONENTS_IMM(inst, rA, imm)                                                             \
+{                                                                                                          \
+    u32 output;                                                                                            \
+    u32 ra = rA;                                                                                           \
+                                                                                                           \
+    asm volatile ("mtxer %[val]" : : [val]"b"(0) : "xer");                                                 \
+    asm volatile (inst " %[out], %[Ra], %[Imm]" : [out]"=&r"(output) : [Ra]"r"(ra), [Imm]"i"(imm));        \
+                                                                                                           \
+    printf("%-8s :: rD 0x%08X | rA 0x%08X | imm 0x%08X | XER: 0x%08X\n", inst, output, rA, imm, GetXER()); \
+}
+
 void PPCIntegerTests()
 {
+    printf("ADD\n");
     OPTEST_3_COMPONENTS("ADD", 0xFFFFFFFF, 1);
     OPTEST_3_COMPONENTS("ADD", -1, 1);
     OPTEST_3_COMPONENTS("ADD", -1, -1);
@@ -63,5 +81,55 @@ void PPCIntegerTests()
     OPTEST_3_COMPONENTS("ADDE", -1, -1);
     OPTEST_3_COMPONENTS("ADDE", 1, 0);
     OPTEST_3_COMPONENTS("ADDE", 0, -1);
-    
+    OPTEST_3_COMPONENTS_IMM("ADDI", 0xFFFFFFFF, 1);
+    OPTEST_3_COMPONENTS_IMM("ADDI", -1, 1);
+    OPTEST_3_COMPONENTS_IMM("ADDI", -1, -1);
+    OPTEST_3_COMPONENTS_IMM("ADDI", 1, 0);
+    OPTEST_3_COMPONENTS_IMM("ADDI", 0, -1);
+    OPTEST_3_COMPONENTS_IMM("ADDIC", 0xFFFFFFFF, 1);
+    OPTEST_3_COMPONENTS_IMM("ADDIC", -1, 1);
+    OPTEST_3_COMPONENTS_IMM("ADDIC", -1, -1);
+    OPTEST_3_COMPONENTS_IMM("ADDIC", 1, 0);
+    OPTEST_3_COMPONENTS_IMM("ADDIC", 0, -1);
+    OPTEST_3_COMPONENTS_IMM("ADDIS", 0xFFFFFFFF, 1);
+    OPTEST_3_COMPONENTS_IMM("ADDIS", -1, 1);
+    OPTEST_3_COMPONENTS_IMM("ADDIS", -1, -1);
+    OPTEST_3_COMPONENTS_IMM("ADDIS", 1, 0);
+    OPTEST_3_COMPONENTS_IMM("ADDIS", 0, -1);
+    OPTEST_2_COMPONENTS("ADDME", 0xFFFFFFFF);
+    OPTEST_2_COMPONENTS("ADDME", -1);
+    OPTEST_2_COMPONENTS("ADDME", 1);
+    OPTEST_2_COMPONENTS("ADDME", 0);
+
+// These manage to crash dolphin on the JIT.
+// On the interpreter it fires panic alerts but does not crash.
+// Guess overflow flags aren't implemented or something.
+#if 0
+    OPTEST_2_COMPONENTS("ADDMEO", 0xFFFFFFFF);
+    OPTEST_2_COMPONENTS("ADDMEO", -1);
+    OPTEST_2_COMPONENTS("ADDMEO", 1);
+    OPTEST_2_COMPONENTS("ADDMEO", 0);
+#endif
+
+    printf("\nAND\n");
+    OPTEST_3_COMPONENTS("AND", 0, 0);
+    OPTEST_3_COMPONENTS("AND", 0, 1);
+    OPTEST_3_COMPONENTS("AND", 1, 1);
+    OPTEST_3_COMPONENTS("AND", 0xFFFFFFFF, 0);
+    OPTEST_3_COMPONENTS("AND", 0xFFFFFFFF, 1);
+    OPTEST_3_COMPONENTS("ANDC", 0, 0);
+    OPTEST_3_COMPONENTS("ANDC", 0, 1);
+    OPTEST_3_COMPONENTS("ANDC", 1, 1);
+    OPTEST_3_COMPONENTS("ANDC", 0xFFFFFFFF, 0);
+    OPTEST_3_COMPONENTS("ANDC", 0xFFFFFFFF, 1);
+    OPTEST_3_COMPONENTS_IMM("ANDI.", 0, 0);
+    OPTEST_3_COMPONENTS_IMM("ANDI.", 0, 1);
+    OPTEST_3_COMPONENTS_IMM("ANDI.", 1, 1);
+    OPTEST_3_COMPONENTS_IMM("ANDI.", 0xFFFFFFFF, 0);
+    OPTEST_3_COMPONENTS_IMM("ANDI.", 0xFFFFFFFF, 1);
+    OPTEST_3_COMPONENTS_IMM("ANDIS.", 0, 0);
+    OPTEST_3_COMPONENTS_IMM("ANDIS.", 0, 1);
+    OPTEST_3_COMPONENTS_IMM("ANDIS.", 1, 1);
+    OPTEST_3_COMPONENTS_IMM("ANDIS.", 0xFFFFFFFF, 0);
+    OPTEST_3_COMPONENTS_IMM("ANDIS.", 0xFFFFFFFF, 1);
 }
