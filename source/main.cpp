@@ -75,7 +75,7 @@ static bool TryOpenFile(const char* path)
     return true;
 }
 
-// Checks if a button is down on any wiimote or GameCube controller.
+// Checks if a button is down on any Wiimote or GameCube controller.
 static bool IsButtonDown(int gc_button_id, int wii_button_id)
 {
     for (int i = 0; i < 4; i++)
