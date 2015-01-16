@@ -26,6 +26,7 @@ static u32 GetCR()
     u32 output;                                                                          \
     u32 ra = rA;                                                                         \
                                                                                          \
+    asm volatile ("mtxer %[val]" : : [val]"b"(0) : "xer");                               \
     asm volatile (inst " %[out], %[Ra]": [out]"=&r"(output) : [Ra]"r"(ra));              \
                                                                                          \
     printf("%-8s :: rD 0x%08X | rA 0x%08X | XER: 0x%08X\n", inst, output, rA, GetXER()); \
@@ -39,6 +40,7 @@ static u32 GetCR()
     u32 ra = rA;                                                                                         \
     u32 rb = rB;                                                                                         \
                                                                                                          \
+    asm volatile ("mtxer %[val]" : : [val]"b"(0) : "xer");                                               \
     asm volatile (inst " %[out], %[Ra], %[Rb]": [out]"=&r"(output) : [Ra]"r"(ra), [Rb]"r"(rb));          \
                                                                                                          \
     printf("%-8s :: rD 0x%08X | rA 0x%08X | rB 0x%08X | XER: 0x%08X\n", inst, output, rA, rB, GetXER()); \
