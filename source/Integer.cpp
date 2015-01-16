@@ -28,7 +28,7 @@ static u32 GetCR()
                                                                                          \
     asm volatile (inst " %[out], %[Ra]": [out]"=&r"(output) : [Ra]"r"(ra));              \
                                                                                          \
-    printf("%s   :: rD 0x%08X | rA 0x%08X | XER: 0x%08X\n", inst, output, rA, GetXER()); \
+    printf("%-8s :: rD 0x%08X | rA 0x%08X | XER: 0x%08X\n", inst, output, rA, GetXER()); \
 }
 
 // Test for a 3-component instruction
