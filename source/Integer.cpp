@@ -17,6 +17,11 @@ static u32 GetXER()
     return xer;
 }
 
+static void SetXER(u32 value)
+{
+    asm volatile ("mtxer %[val]" : : [val]"b"(value) : "xer");
+}
+
 static u32 GetCR(u32 reg)
 {
     if (reg > 7)
@@ -27,6 +32,11 @@ static u32 GetCR(u32 reg)
 
     asm volatile ("mfcr %[out]" : [out]"=b"(reg));
     return reg;
+}
+
+static void SetCR(u32 value)
+{
+    asm volatile ("mtcr %[val]" : : [val]"b"(value) : "cr0", "cr1", "cr2", "cr3", "cr4", "cr5", "cr6", "cr7");
 }
 
 // Test for a 2-component instruction
