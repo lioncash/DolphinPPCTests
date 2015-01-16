@@ -17,11 +17,16 @@ static u32 GetXER()
     return xer;
 }
 
-static u32 GetCR()
+static u32 GetCR(u32 reg)
 {
-    u32 cr;
-    asm volatile ("mfcr %[out]" : [out]"=b"(cr));
-    return cr;
+    if (reg > 7)
+    {
+        printf("Selected condition register is out of range: %u\n", reg);
+        return 0;
+    }
+
+    asm volatile ("mfcr %[out]" : [out]"=b"(reg));
+    return reg;
 }
 
 // Test for a 2-component instruction
