@@ -25,21 +25,19 @@ INCLUDES	:=
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS	= -g -O2 -Wall $(MACHDEP) $(INCLUDE)
-CXXFLAGS	=	$(CFLAGS) -std=gnu++11
+CFLAGS   = -g -O2 -Wall $(MACHDEP) $(INCLUDE)
+CXXFLAGS =	$(CFLAGS) -std=gnu++11
 
-LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
+LDFLAGS  =	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 # the order can-be/is critical
 #---------------------------------------------------------------------------------
-LIBS	:= -lgrrlib
 LIBS	+= -lfreetype
 LIBS	+= -lpngu -lpng -ljpeg -lz -lfat
 LIBS	+= -lwiiuse
-#LIBS	+= -lmodplay -laesnd
-LIBS	+= -lbte -logc -lm
+LIBS	+= -lbte -lfat -logc -lm
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
