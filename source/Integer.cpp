@@ -5,11 +5,6 @@
 #include "tests.h"
 #include "Utils.h"
 
-//
-// TODO: Dump the state of the condition registers as well.
-//       Can help with uncovering flag setting bugs.
-//
-
 static u32 GetXER()
 {
     u32 xer;
@@ -22,14 +17,9 @@ static void SetXER(u32 value)
     asm volatile ("mtxer %[val]" : : [val]"b"(value) : "xer");
 }
 
-static u32 GetCR(u32 reg)
+static u32 GetCR()
 {
-    if (reg > 7)
-    {
-        printf("Selected condition register is out of range: %u\n", reg);
-        return 0;
-    }
-
+    u32 reg;
     asm volatile ("mfcr %[out]" : [out]"=b"(reg));
     return reg;
 }
@@ -41,41 +31,47 @@ static void SetCR(u32 value)
 
 // Test for a 2-component instruction
 // e.g. ADDME rD, rA
-#define OPTEST_2_COMPONENTS(inst, rA)                                                    \
-{                                                                                        \
-    u32 output;                                                                          \
-    u32 ra = rA;                                                                         \
-                                                                                         \
-    asm volatile ("mtxer %[val]" : : [val]"b"(0) : "xer");                               \
-    asm volatile (inst " %[out], %[Ra]": [out]"=&r"(output) : [Ra]"r"(ra));              \
-                                                                                         \
-    printf("%-8s :: rD 0x%08X | rA 0x%08X | XER: 0x%08X\n", inst, output, rA, GetXER()); \
+#define OPTEST_2_COMPONENTS(inst, rA)                                        \
+{                                                                            \
+    u32 output;                                                              \
+    u32 ra = rA;                                                             \
+                                                                             \
+    SetXER(0);                                                               \
+    SetCR(0);                                                                \
+    asm volatile (inst " %[out], %[Ra]": [out]"=&r"(output) : [Ra]"r"(ra));  \
+                                                                             \
+    printf("%-8s :: rD 0x%08X | rA 0x%08X | XER: 0x%08X | CR: 0x%08X\n",     \
+           inst, output, rA, GetXER(), GetCR());                             \
 }
 
 // Test for a 3-component instruction
 // e.g. ADD rD, rA, rB
-#define OPTEST_3_COMPONENTS(inst, rA, rB)                                                                \
-{                                                                                                        \
-    u32 output;                                                                                          \
-    u32 ra = rA;                                                                                         \
-    u32 rb = rB;                                                                                         \
-                                                                                                         \
-    asm volatile ("mtxer %[val]" : : [val]"b"(0) : "xer");                                               \
-    asm volatile (inst " %[out], %[Ra], %[Rb]": [out]"=&r"(output) : [Ra]"r"(ra), [Rb]"r"(rb));          \
-                                                                                                         \
-    printf("%-8s :: rD 0x%08X | rA 0x%08X | rB 0x%08X | XER: 0x%08X\n", inst, output, rA, rB, GetXER()); \
+#define OPTEST_3_COMPONENTS(inst, rA, rB)                                                       \
+{                                                                                               \
+    u32 output;                                                                                 \
+    u32 ra = rA;                                                                                \
+    u32 rb = rB;                                                                                \
+                                                                                                \
+    SetCR(0);                                                                                   \
+    SetXER(0);                                                                                  \
+    asm volatile (inst " %[out], %[Ra], %[Rb]": [out]"=&r"(output) : [Ra]"r"(ra), [Rb]"r"(rb)); \
+                                                                                                \
+    printf("%-8s :: rD 0x%08X | rA 0x%08X | rB 0x%08X | XER: 0x%08X | CR: 0x%08X\n",            \
+           inst, output, rA, rB, GetXER(), GetCR());                                            \
 }
 
 // Test for a 3-component instruction, where the third component is an immediate.
-#define OPTEST_3_COMPONENTS_IMM(inst, rA, imm)                                                             \
-{                                                                                                          \
-    u32 output;                                                                                            \
-    u32 ra = rA;                                                                                           \
-                                                                                                           \
-    asm volatile ("mtxer %[val]" : : [val]"b"(0) : "xer");                                                 \
-    asm volatile (inst " %[out], %[Ra], %[Imm]" : [out]"=&r"(output) : [Ra]"r"(ra), [Imm]"i"(imm));        \
-                                                                                                           \
-    printf("%-8s :: rD 0x%08X | rA 0x%08X | imm 0x%08X | XER: 0x%08X\n", inst, output, rA, imm, GetXER()); \
+#define OPTEST_3_COMPONENTS_IMM(inst, rA, imm)                                                      \
+{                                                                                                   \
+    u32 output;                                                                                     \
+    u32 ra = rA;                                                                                    \
+                                                                                                    \
+    SetCR(0);                                                                                       \
+    SetXER(0);                                                                                      \
+    asm volatile (inst " %[out], %[Ra], %[Imm]" : [out]"=&r"(output) : [Ra]"r"(ra), [Imm]"i"(imm)); \
+                                                                                                    \
+    printf("%-8s :: rD 0x%08X | rA 0x%08X | imm 0x%08X | XER: 0x%08X | CR: 0x%08X\n",               \
+           inst, output, rA, imm, GetXER(), GetCR());                                               \
 }
 
 void PPCIntegerTests()
