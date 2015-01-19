@@ -60,20 +60,6 @@ static void SetCR(u32 value)
            inst, output, rA, rB, GetXER(), GetCR());                                            \
 }
 
-// Test for a 3-component instruction, where the third component is an immediate.
-#define OPTEST_3_COMPONENTS_IMM(inst, rA, imm)                                                      \
-{                                                                                                   \
-    u32 output;                                                                                     \
-    u32 ra = rA;                                                                                    \
-                                                                                                    \
-    SetCR(0);                                                                                       \
-    SetXER(0);                                                                                      \
-    asm volatile (inst " %[out], %[Ra], %[Imm]" : [out]"=&r"(output) : [Ra]"r"(ra), [Imm]"i"(imm)); \
-                                                                                                    \
-    printf("%-8s :: rD 0x%08X | rA 0x%08X | imm 0x%08X | XER: 0x%08X | CR: 0x%08X\n",               \
-           inst, output, rA, imm, GetXER(), GetCR());                                               \
-}
-
 void PPCIntegerTests()
 {
     printf("ADD\n");
@@ -137,21 +123,21 @@ void PPCIntegerTests()
     OPTEST_3_COMPONENTS("ADDEO.", -1, -1);
     OPTEST_3_COMPONENTS("ADDEO.", 1, 0);
     OPTEST_3_COMPONENTS("ADDEO.", 0, -1);
-    OPTEST_3_COMPONENTS_IMM("ADDI", 0xFFFFFFFF, 1);
-    OPTEST_3_COMPONENTS_IMM("ADDI", -1, 1);
-    OPTEST_3_COMPONENTS_IMM("ADDI", -1, -1);
-    OPTEST_3_COMPONENTS_IMM("ADDI", 1, 0);
-    OPTEST_3_COMPONENTS_IMM("ADDI", 0, -1);
-    OPTEST_3_COMPONENTS_IMM("ADDIC", 0xFFFFFFFF, 1);
-    OPTEST_3_COMPONENTS_IMM("ADDIC", -1, 1);
-    OPTEST_3_COMPONENTS_IMM("ADDIC", -1, -1);
-    OPTEST_3_COMPONENTS_IMM("ADDIC", 1, 0);
-    OPTEST_3_COMPONENTS_IMM("ADDIC", 0, -1);
-    OPTEST_3_COMPONENTS_IMM("ADDIS", 0xFFFFFFFF, 1);
-    OPTEST_3_COMPONENTS_IMM("ADDIS", -1, 1);
-    OPTEST_3_COMPONENTS_IMM("ADDIS", -1, -1);
-    OPTEST_3_COMPONENTS_IMM("ADDIS", 1, 0);
-    OPTEST_3_COMPONENTS_IMM("ADDIS", 0, -1);
+    OPTEST_3_COMPONENTS("ADDI", 0xFFFFFFFF, 1);
+    OPTEST_3_COMPONENTS("ADDI", -1, 1);
+    OPTEST_3_COMPONENTS("ADDI", -1, -1);
+    OPTEST_3_COMPONENTS("ADDI", 1, 0);
+    OPTEST_3_COMPONENTS("ADDI", 0, -1);
+    OPTEST_3_COMPONENTS("ADDIC", 0xFFFFFFFF, 1);
+    OPTEST_3_COMPONENTS("ADDIC", -1, 1);
+    OPTEST_3_COMPONENTS("ADDIC", -1, -1);
+    OPTEST_3_COMPONENTS("ADDIC", 1, 0);
+    OPTEST_3_COMPONENTS("ADDIC", 0, -1);
+    OPTEST_3_COMPONENTS("ADDIS", 0xFFFFFFFF, 1);
+    OPTEST_3_COMPONENTS("ADDIS", -1, 1);
+    OPTEST_3_COMPONENTS("ADDIS", -1, -1);
+    OPTEST_3_COMPONENTS("ADDIS", 1, 0);
+    OPTEST_3_COMPONENTS("ADDIS", 0, -1);
     OPTEST_2_COMPONENTS("ADDME", 0xFFFFFFFF);
     OPTEST_2_COMPONENTS("ADDME", -1);
     OPTEST_2_COMPONENTS("ADDME", 1);
@@ -212,14 +198,14 @@ void PPCIntegerTests()
     OPTEST_3_COMPONENTS("ANDC.", 1, 1);
     OPTEST_3_COMPONENTS("ANDC.", 0xFFFFFFFF, 0);
     OPTEST_3_COMPONENTS("ANDC.", 0xFFFFFFFF, 1);
-    OPTEST_3_COMPONENTS_IMM("ANDI.", 0, 0);
-    OPTEST_3_COMPONENTS_IMM("ANDI.", 0, 1);
-    OPTEST_3_COMPONENTS_IMM("ANDI.", 1, 1);
-    OPTEST_3_COMPONENTS_IMM("ANDI.", 0xFFFFFFFF, 0);
-    OPTEST_3_COMPONENTS_IMM("ANDI.", 0xFFFFFFFF, 1);
-    OPTEST_3_COMPONENTS_IMM("ANDIS.", 0, 0);
-    OPTEST_3_COMPONENTS_IMM("ANDIS.", 0, 1);
-    OPTEST_3_COMPONENTS_IMM("ANDIS.", 1, 1);
-    OPTEST_3_COMPONENTS_IMM("ANDIS.", 0xFFFFFFFF, 0);
-    OPTEST_3_COMPONENTS_IMM("ANDIS.", 0xFFFFFFFF, 1);
+    OPTEST_3_COMPONENTS("ANDI.", 0, 0);
+    OPTEST_3_COMPONENTS("ANDI.", 0, 1);
+    OPTEST_3_COMPONENTS("ANDI.", 1, 1);
+    OPTEST_3_COMPONENTS("ANDI.", 0xFFFFFFFF, 0);
+    OPTEST_3_COMPONENTS("ANDI.", 0xFFFFFFFF, 1);
+    OPTEST_3_COMPONENTS("ANDIS.", 0, 0);
+    OPTEST_3_COMPONENTS("ANDIS.", 0, 1);
+    OPTEST_3_COMPONENTS("ANDIS.", 1, 1);
+    OPTEST_3_COMPONENTS("ANDIS.", 0xFFFFFFFF, 0);
+    OPTEST_3_COMPONENTS("ANDIS.", 0xFFFFFFFF, 1);
 }
