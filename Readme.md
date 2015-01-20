@@ -5,6 +5,11 @@ text files on the SD card (e.g. "integer_tests.txt", "floating_point_tests.txt",
 
 This can also potentially be used for other PowerPC-based emulators as well, although the Makefile and code in main.cpp will need to be modified.
 
+## Building it
+
+1. Install devkitPPC
+2. Just run make.
+
 ## How to use it (on the Wii)
 1. Run it on the console and select the tests to run.
 2. It'll dump the results to the SD card.
@@ -14,8 +19,3 @@ Currently you'll need to use an external tool (if on Windows) to access the virt
 (I've only tested with WinImage, and that seems to work).
 5. Diff the test files with each other.
 6. If any values differ from the hardware results, your PowerPC emulation is inaccurate.
-
-## Building it
-
-1. Install devkitPPC
-2. Just run make.
