@@ -95,6 +95,7 @@ int main()
     Initialize();
     printf("Dolphin PPC Instruction Tests\n");
     printf("Press A to run PPC integer tests.\n");
+    printf("Press B to run PPC floating point tests.\n");
     printf("Press Start or Home to exit.\n\n\n");
 
     // Keep the original stdout devoptab around, since 
@@ -117,6 +118,19 @@ int main()
                 printf("Running PPC Integer tests...\n");
                 devoptab_list[STD_OUT] = &dotab_file;
                 PPCIntegerTests();
+                devoptab_list[STD_OUT] = &console_tab;
+                fclose(f);
+                printf("Done!\n");
+            }
+        }
+
+        if (IsButtonDown(PAD_BUTTON_B, WPAD_BUTTON_B))
+        {
+            if (TryOpenFile("floating_point_tests.txt"))
+            {
+                printf("Running PPC Floating Point tests...\n");
+                devoptab_list[STD_OUT] = &dotab_file;
+                PPCFloatingPointTests();
                 devoptab_list[STD_OUT] = &console_tab;
                 fclose(f);
                 printf("Done!\n");

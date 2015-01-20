@@ -3,6 +3,18 @@
 
 #include "Tests.h"
 
+static u32 GetXER()
+{
+    u32 xer;
+    asm volatile ("mfxer %[out]" : [out]"=b"(xer));
+    return xer;
+}
+
+static void SetXER(u32 value)
+{
+    asm volatile ("mtxer %[val]" : : [val]"b"(value) : "xer");
+}
+
 // Test for a 2-component instruction
 // e.g. ADDME rD, rA
 #define OPTEST_2_COMPONENTS(inst, rA)                                        \
