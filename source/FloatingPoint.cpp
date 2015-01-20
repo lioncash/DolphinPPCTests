@@ -11,6 +11,14 @@
 #define DOUBLE_SNAN std::numeric_limits<double>::signaling_NaN()
 #define DOUBLE_QNAN std::numeric_limits<double>::quiet_NaN()
 
+enum RoundingMode
+{
+    RoundToNearest,
+    RoundTowardZero,
+    RoundTowardPositiveInfinity,
+    RoundTowardNegativeInfinity,
+};
+
 static void ClearFPSCR()
 {
     asm volatile ("mtfsf 0xFF, %[reg]" : : [reg]"f"(0.0));
@@ -27,6 +35,39 @@ static u32 GetFPSCR()
 
     // Lower 32 bits are undefined according to the PPC reference.
     return cvt.u[1];
+}
+
+// Sets the bits in the FPSCR that indicate the rounding mode.
+static void SetRoundingMode(RoundingMode mode)
+{
+    if (mode == RoundToNearest)
+    {
+        asm volatile (
+            "mtfsb0 30\n"
+            "mtfsb0 31\n"
+        );
+    }
+    else if (mode == RoundTowardZero)
+    {
+        asm volatile (
+            "mtfsb0 30\n"
+            "mtfsb1 31\n"
+        );
+    }
+    else if (mode == RoundTowardPositiveInfinity)
+    {
+        asm volatile (
+            "mtfsb1 30\n"
+            "mtfsb0 31\n"
+        );
+    }
+    else if (mode == RoundTowardNegativeInfinity)
+    {
+        asm volatile (
+            "mtfsb1 30\n"
+            "mtfsb1 31\n"
+        );
+    }
 }
 
 // Test for a 2-component instruction
