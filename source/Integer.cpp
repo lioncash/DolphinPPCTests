@@ -1,9 +1,7 @@
 #include <cstdint>
 #include <cstdio>
-#include <string>
 
 #include "Tests.h"
-#include "Utils.h"
 
 // Test for a 2-component instruction
 // e.g. ADDME rD, rA
