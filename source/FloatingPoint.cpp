@@ -11,14 +11,6 @@
 #define DOUBLE_SNAN std::numeric_limits<double>::signaling_NaN()
 #define DOUBLE_QNAN std::numeric_limits<double>::quiet_NaN()
 
-enum RoundingMode
-{
-    RoundToNearest,
-    RoundTowardZero,
-    RoundTowardPositiveInfinity,
-    RoundTowardNegativeInfinity,
-};
-
 static void ClearFPSCR()
 {
     asm volatile ("mtfsf 0xFF, %[reg]" : : [reg]"f"(0.0));
@@ -37,39 +29,6 @@ static u32 GetFPSCR()
     return cvt.u[1];
 }
 
-// Sets the bits in the FPSCR that indicate the rounding mode.
-static void SetRoundingMode(RoundingMode mode)
-{
-    if (mode == RoundToNearest)
-    {
-        asm volatile (
-            "mtfsb0 30\n"
-            "mtfsb0 31\n"
-        );
-    }
-    else if (mode == RoundTowardZero)
-    {
-        asm volatile (
-            "mtfsb0 30\n"
-            "mtfsb1 31\n"
-        );
-    }
-    else if (mode == RoundTowardPositiveInfinity)
-    {
-        asm volatile (
-            "mtfsb1 30\n"
-            "mtfsb0 31\n"
-        );
-    }
-    else if (mode == RoundTowardNegativeInfinity)
-    {
-        asm volatile (
-            "mtfsb1 30\n"
-            "mtfsb1 31\n"
-        );
-    }
-}
-
 // Test for a 2-component instruction
 // e.g. FABS frD, frB
 #define OPTEST_2_COMPONENTS(inst, frA)                                         \
@@ -84,32 +43,62 @@ static void SetRoundingMode(RoundingMode mode)
            inst, output, frA, GetFPSCR(), GetCR());                            \
 }
 
-// Test for a 2-component instruction with the ability to set the float point rounding mode.
-#define OPTEST_2_COMPONENTS_WITH_ROUND(inst, frA, mode)                        \
-{                                                                              \
-    double output;                                                             \
-                                                                               \
-    ClearFPSCR();                                                              \
-    SetCR(0);                                                                  \
-    SetRoundingMode(mode);                                                     \
-    asm volatile (inst " %[out], %[Fra]": [out]"=&f"(output) : [Fra]"f"(frA)); \
-                                                                               \
-    printf("%-8s :: frD %e | frA %e | FPSCR: 0x%08X | CR: 0x%08X\n",           \
-           inst, output, frA, GetFPSCR(), GetCR());                            \
+// Test for a 2-component instruction which tests all rounding modes.
+#define OPTEST_2_COMPONENTS_WITH_ROUND(inst, frA)                        \
+{                                                                        \
+    double output;                                                       \
+                                                                         \
+                                                                         \
+    for (int i = 0; i <= 3; i++)                                         \
+    {                                                                    \
+        ClearFPSCR();                                                    \
+        SetCR(0);                                                        \
+                                                                         \
+        if (i == 0)                                                      \
+            asm volatile ("mtfsb0 30\nmtfsb0 31\n");                     \
+        else if (i == 1)                                                 \
+            asm volatile ("mtfsb0 30\nmtfsb1 31\n");                     \
+        else if (i == 2)                                                 \
+            asm volatile ("mtfsb1 30\nmtfsb0 31\n");                     \
+        else if (i == 3)                                                 \
+            asm volatile ("mtfsb1 30\nmtfsb1 31\n");                     \
+                                                                         \
+        asm volatile (inst " %[out], %[Fra]"                             \
+            : [out]"=&f"(output)                                         \
+            : [Fra]"f"(frA));                                            \
+                                                                         \
+        printf("%-8s :: frD %e | frA %e | FPSCR: 0x%08X | CR: 0x%08X\n", \
+               inst, output, frA, GetFPSCR(), GetCR());                  \
+    }                                                                    \
 }
 
-// Test for a 3-component instruction
+// Test for a 3-component instruction with all rounding modes.
 // e.g. FADDS frD, frA, frB
-#define OPTEST_3_COMPONENTS(inst, frA, frB)                                                            \
-{                                                                                                      \
-    double output;                                                                                     \
-                                                                                                       \
-    ClearFPSCR();                                                                                      \
-    SetCR(0);                                                                                          \
-    asm volatile (inst " %[out], %[Fra], %[Frb]" : [out]"=&f"(output) : [Fra]"f"(frA), [Frb]"f"(frB)); \
-                                                                                                       \
-    printf("%-8s :: frD %e | frA %e | frB %e | FPSCR: 0x%08X | CR: 0x%08X\n",                          \
-           inst, output, frA, frB, GetFPSCR(), GetCR());                                               \
+#define OPTEST_3_COMPONENTS_WITH_ROUND(inst, frA, frB)                            \
+{                                                                                 \
+    double output;                                                                \
+                                                                                  \
+    for (int i = 0; i <= 3; i++)                                                  \
+    {                                                                             \
+        ClearFPSCR();                                                             \
+        SetCR(0);                                                                 \
+                                                                                  \
+        if (i == 0)                                                               \
+            asm volatile ("mtfsb0 30\nmtfsb0 31\n");                              \
+        else if (i == 1)                                                          \
+            asm volatile ("mtfsb0 30\nmtfsb1 31\n");                              \
+        else if (i == 2)                                                          \
+            asm volatile ("mtfsb1 30\nmtfsb0 31\n");                              \
+        else if (i == 3)                                                          \
+            asm volatile ("mtfsb1 30\nmtfsb1 31\n");                              \
+                                                                                  \
+        asm volatile (inst " %[out], %[Fra], %[Frb]"                              \
+            : [out]"=&f"(output)                                                  \
+            : [Fra]"f"(frA), [Frb]"f"(frB));                                      \
+                                                                                  \
+        printf("%-8s :: frD %e | frA %e | frB %e | FPSCR: 0x%08X | CR: 0x%08X\n", \
+               inst, output, frA, frB, GetFPSCR(), GetCR());                      \
+    }                                                                             \
 }
 
 // Used for testing CMP instructions.
@@ -123,6 +112,34 @@ static void SetRoundingMode(RoundingMode mode)
            inst, frA, frB, GetFPSCR(), GetCR());                                \
 }
 
+// Test for a 4-component instruction with all rounding modes.
+// e.g. FMADD frD, frA, frC, frB
+#define OPTEST_4_COMPONENTS_WITH_ROUND(inst, frA, frC, frB)                                \
+{                                                                                          \
+    double output;                                                                         \
+                                                                                           \
+    for (int i = 0; i <= 3; i++)                                                           \
+    {                                                                                      \
+        ClearFPSCR();                                                                      \
+        SetCR(0);                                                                          \
+                                                                                           \
+        if (i == 0)                                                                        \
+            asm volatile ("mtfsb0 30\nmtfsb0 31\n");                                       \
+        else if (i == 1)                                                                   \
+            asm volatile ("mtfsb0 30\nmtfsb1 31\n");                                       \
+        else if (i == 2)                                                                   \
+            asm volatile ("mtfsb1 30\nmtfsb0 31\n");                                       \
+        else if (i == 3)                                                                   \
+            asm volatile ("mtfsb1 30\nmtfsb1 31\n");                                       \
+                                                                                           \
+        asm volatile (inst " %[out], %[Fra], %[Frc], %[Frb]"                               \
+            : [out]"=&f"(output)                                                           \
+            : [Fra]"f"(frA), [Frc]"f"(frC), [Frb]"f"(frB));                                \
+                                                                                           \
+        printf("%-8s :: frD %e | frA %e | frC %e | frB %e | FPSCR: 0x%08X | CR: 0x%08X\n", \
+               inst, output, frA, frC, frB, GetFPSCR(), GetCR());                          \
+    }                                                                                      \
+}
 
 void PPCFloatingPointTests()
 {
@@ -151,73 +168,77 @@ void PPCFloatingPointTests()
     OPTEST_2_COMPONENTS("FABS.", -INFINITY);
 
     printf("\nFADD Variants\n");
-    OPTEST_3_COMPONENTS("FADD", 0.0, 0.0);
-    OPTEST_3_COMPONENTS("FADD", 0.5, 0.5);
-    OPTEST_3_COMPONENTS("FADD", 1.0, 1.0);
-    OPTEST_3_COMPONENTS("FADD", 3.5, 3.5);
-    OPTEST_3_COMPONENTS("FADD", std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
-    OPTEST_3_COMPONENTS("FADD", -std::numeric_limits<double>::max(), -std::numeric_limits<double>::max());
-    OPTEST_3_COMPONENTS("FADD", std::numeric_limits<double>::max(), -std::numeric_limits<double>::max());
-    OPTEST_3_COMPONENTS("FADD", FLOAT_SNAN, INFINITY);
-    OPTEST_3_COMPONENTS("FADD", FLOAT_QNAN, INFINITY);
-    OPTEST_3_COMPONENTS("FADD", FLOAT_QNAN, -INFINITY);
-    OPTEST_3_COMPONENTS("FADD", INFINITY, FLOAT_QNAN);
-    OPTEST_3_COMPONENTS("FADD", -INFINITY, FLOAT_QNAN);
-    OPTEST_3_COMPONENTS("FADD", INFINITY, INFINITY);
-    OPTEST_3_COMPONENTS("FADD", INFINITY, -INFINITY);
-    OPTEST_3_COMPONENTS("FADD", -INFINITY, INFINITY);
-    OPTEST_3_COMPONENTS("FADD", -INFINITY, -INFINITY);
-    OPTEST_3_COMPONENTS("FADD.", 0.0, 0.0);
-    OPTEST_3_COMPONENTS("FADD.", 0.5, 0.5);
-    OPTEST_3_COMPONENTS("FADD.", 1.0, 1.0);
-    OPTEST_3_COMPONENTS("FADD.", 3.5, 3.5);
-    OPTEST_3_COMPONENTS("FADD.", std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
-    OPTEST_3_COMPONENTS("FADD.", -std::numeric_limits<double>::max(), -std::numeric_limits<double>::max());
-    OPTEST_3_COMPONENTS("FADD.", std::numeric_limits<double>::max(), -std::numeric_limits<double>::max());
-    OPTEST_3_COMPONENTS("FADD.", FLOAT_SNAN, INFINITY);
-    OPTEST_3_COMPONENTS("FADD.", FLOAT_QNAN, INFINITY);
-    OPTEST_3_COMPONENTS("FADD.", FLOAT_QNAN, -INFINITY);
-    OPTEST_3_COMPONENTS("FADD.", INFINITY, FLOAT_QNAN);
-    OPTEST_3_COMPONENTS("FADD.", -INFINITY, FLOAT_QNAN);
-    OPTEST_3_COMPONENTS("FADD.", INFINITY, INFINITY);
-    OPTEST_3_COMPONENTS("FADD.", INFINITY, -INFINITY);
-    OPTEST_3_COMPONENTS("FADD.", -INFINITY, INFINITY);
-    OPTEST_3_COMPONENTS("FADD.", -INFINITY, -INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD", 0.0, 0.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD", 0.5, 0.5);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD", 1.0, 1.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD", 3.5, 3.5);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD", 3.92364e-044, 3.92364e-044);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD", std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD", -std::numeric_limits<double>::max(), -std::numeric_limits<double>::max());
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD", std::numeric_limits<double>::max(), -std::numeric_limits<double>::max());
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD", FLOAT_SNAN, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD", FLOAT_QNAN, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD", FLOAT_QNAN, -INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD", INFINITY, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD", -INFINITY, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD", INFINITY, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD", INFINITY, -INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD", -INFINITY, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD", -INFINITY, -INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD.", 0.0, 0.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD.", 0.5, 0.5);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD.", 1.0, 1.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD.", 3.5, 3.5);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD.", 3.92364e-044, 3.92364e-044);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD.", std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD.", -std::numeric_limits<double>::max(), -std::numeric_limits<double>::max());
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD.", std::numeric_limits<double>::max(), -std::numeric_limits<double>::max());
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD.", FLOAT_SNAN, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD.", FLOAT_QNAN, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD.", FLOAT_QNAN, -INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD.", INFINITY, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD.", -INFINITY, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD.", INFINITY, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD.", INFINITY, -INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD.", -INFINITY, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADD.", -INFINITY, -INFINITY);
 
-    OPTEST_3_COMPONENTS("FADDS", 0.0, 0.0);
-    OPTEST_3_COMPONENTS("FADDS", 0.5, 0.5);
-    OPTEST_3_COMPONENTS("FADDS", 1.0, 1.0);
-    OPTEST_3_COMPONENTS("FADDS", 3.5, 3.5);
-    OPTEST_3_COMPONENTS("FADDS", std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
-    OPTEST_3_COMPONENTS("FADDS", -std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
-    OPTEST_3_COMPONENTS("FADDS", std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
-    OPTEST_3_COMPONENTS("FADDS", 0.0, std::numeric_limits<double>::max());
-    OPTEST_3_COMPONENTS("FADDS", FLOAT_SNAN, INFINITY);
-    OPTEST_3_COMPONENTS("FADDS", FLOAT_QNAN, INFINITY);
-    OPTEST_3_COMPONENTS("FADDS", FLOAT_QNAN, -INFINITY);
-    OPTEST_3_COMPONENTS("FADDS", INFINITY, FLOAT_QNAN);
-    OPTEST_3_COMPONENTS("FADDS", -INFINITY, FLOAT_QNAN);
-    OPTEST_3_COMPONENTS("FADDS", INFINITY, INFINITY);
-    OPTEST_3_COMPONENTS("FADDS", INFINITY, -INFINITY);
-    OPTEST_3_COMPONENTS("FADDS", -INFINITY, INFINITY);
-    OPTEST_3_COMPONENTS("FADDS", -INFINITY, -INFINITY);
-    OPTEST_3_COMPONENTS("FADDS.", 0.0, 0.0);
-    OPTEST_3_COMPONENTS("FADDS.", 0.5, 0.5);
-    OPTEST_3_COMPONENTS("FADDS.", 1.0, 1.0);
-    OPTEST_3_COMPONENTS("FADDS.", 3.5, 3.5);
-    OPTEST_3_COMPONENTS("FADDS.", std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
-    OPTEST_3_COMPONENTS("FADDS.", -std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
-    OPTEST_3_COMPONENTS("FADDS.", std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
-    OPTEST_3_COMPONENTS("FADDS.", 0.0, std::numeric_limits<double>::max());
-    OPTEST_3_COMPONENTS("FADDS.", FLOAT_SNAN, INFINITY);
-    OPTEST_3_COMPONENTS("FADDS.", FLOAT_QNAN, INFINITY);
-    OPTEST_3_COMPONENTS("FADDS.", FLOAT_QNAN, -INFINITY);
-    OPTEST_3_COMPONENTS("FADDS.", INFINITY, FLOAT_QNAN);
-    OPTEST_3_COMPONENTS("FADDS.", -INFINITY, FLOAT_QNAN);
-    OPTEST_3_COMPONENTS("FADDS.", INFINITY, INFINITY);
-    OPTEST_3_COMPONENTS("FADDS.", INFINITY, -INFINITY);
-    OPTEST_3_COMPONENTS("FADDS.", -INFINITY, INFINITY);
-    OPTEST_3_COMPONENTS("FADDS.", -INFINITY, -INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS", 0.0, 0.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS", 0.5, 0.5);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS", 1.0, 1.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS", 3.5, 3.5);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS", 3.92364e-044, 3.92364e-044);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS", std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS", -std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS", std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS", 0.0, std::numeric_limits<double>::max());
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS", FLOAT_SNAN, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS", FLOAT_QNAN, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS", FLOAT_QNAN, -INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS", INFINITY, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS", -INFINITY, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS", INFINITY, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS", INFINITY, -INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS", -INFINITY, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS", -INFINITY, -INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS.", 0.0, 0.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS.", 0.5, 0.5);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS.", 1.0, 1.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS.", 3.5, 3.5);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS.", 3.92364e-044, 3.92364e-044);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS.", std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS.", -std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS.", std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS.", 0.0, std::numeric_limits<double>::max());
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS.", FLOAT_SNAN, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS.", FLOAT_QNAN, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS.", FLOAT_QNAN, -INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS.", INFINITY, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS.", -INFINITY, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS.", INFINITY, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS.", INFINITY, -INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS.", -INFINITY, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FADDS.", -INFINITY, -INFINITY);
 
     printf("\nFCMP variants\n");
     OPTEST_3_COMPONENTS_CMP("FCMPO", 0.0, 0.0);
@@ -246,78 +267,26 @@ void PPCFloatingPointTests()
     OPTEST_3_COMPONENTS_CMP("FCMPU", -INFINITY, -INFINITY);
 
     printf("\nFCTI Variants\n");
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", 0.0, RoundToNearest);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", 0.0, RoundTowardZero);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", 0.0, RoundTowardPositiveInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", 0.0, RoundTowardNegativeInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", 0.5, RoundToNearest);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", 0.5, RoundTowardZero);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", 0.5, RoundTowardPositiveInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", 0.5, RoundTowardNegativeInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", -0.5, RoundToNearest);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", -0.5, RoundTowardZero);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", -0.5, RoundTowardPositiveInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", -0.5, RoundTowardNegativeInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", 2.4679999352, RoundToNearest);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", 2.4679999352, RoundTowardZero);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", 2.4679999352, RoundTowardPositiveInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", 2.4679999352, RoundTowardNegativeInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", -2.4679999352, RoundToNearest);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", -2.4679999352, RoundTowardZero);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", -2.4679999352, RoundTowardPositiveInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", -2.4679999352, RoundTowardNegativeInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", FLOAT_SNAN, RoundToNearest);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", FLOAT_SNAN, RoundTowardZero);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", FLOAT_SNAN, RoundTowardPositiveInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", FLOAT_SNAN, RoundTowardNegativeInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", FLOAT_QNAN, RoundToNearest);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", FLOAT_QNAN, RoundTowardZero);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", FLOAT_QNAN, RoundTowardPositiveInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", FLOAT_QNAN, RoundTowardNegativeInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", INFINITY, RoundToNearest);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", INFINITY, RoundTowardZero);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", INFINITY, RoundTowardPositiveInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", INFINITY, RoundTowardNegativeInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", -INFINITY, RoundToNearest);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", -INFINITY, RoundTowardZero);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", -INFINITY, RoundTowardPositiveInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", -INFINITY, RoundTowardNegativeInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", 0.0, RoundToNearest);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", 0.0, RoundTowardZero);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", 0.0, RoundTowardPositiveInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", 0.0, RoundTowardNegativeInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", 0.5, RoundToNearest);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", 0.5, RoundTowardZero);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", 0.5, RoundTowardPositiveInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", 0.5, RoundTowardNegativeInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", -0.5, RoundToNearest);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", -0.5, RoundTowardZero);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", -0.5, RoundTowardPositiveInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", -0.5, RoundTowardNegativeInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", 2.4679999352, RoundToNearest);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", 2.4679999352, RoundTowardZero);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", 2.4679999352, RoundTowardPositiveInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", 2.4679999352, RoundTowardNegativeInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", -2.4679999352, RoundToNearest);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", -2.4679999352, RoundTowardZero);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", -2.4679999352, RoundTowardPositiveInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", -2.4679999352, RoundTowardNegativeInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", FLOAT_SNAN, RoundToNearest);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", FLOAT_SNAN, RoundTowardZero);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", FLOAT_SNAN, RoundTowardPositiveInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", FLOAT_SNAN, RoundTowardNegativeInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", FLOAT_QNAN, RoundToNearest);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", FLOAT_QNAN, RoundTowardZero);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", FLOAT_QNAN, RoundTowardPositiveInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", FLOAT_QNAN, RoundTowardNegativeInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", INFINITY, RoundToNearest);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", INFINITY, RoundTowardZero);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", INFINITY, RoundTowardPositiveInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", INFINITY, RoundTowardNegativeInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", -INFINITY, RoundToNearest);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", -INFINITY, RoundTowardZero);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", -INFINITY, RoundTowardPositiveInfinity);
-    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", -INFINITY, RoundTowardNegativeInfinity);
+    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", 0.0);
+    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", 0.5);
+    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", -0.5);
+    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", 2.4679999352);
+    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", -2.4679999352);
+    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", 6.30584e-044);
+    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", FLOAT_SNAN);
+    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", FLOAT_QNAN);
+    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", INFINITY);
+    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW", -INFINITY);
+    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", 0.0);
+    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", 0.5);
+    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", -0.5);
+    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", 2.4679999352);
+    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", -2.4679999352);
+    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", 6.30584e-044);
+    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", FLOAT_SNAN);
+    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", FLOAT_QNAN);
+    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", INFINITY);
+    OPTEST_2_COMPONENTS_WITH_ROUND("FCTIW.", -INFINITY);
     OPTEST_2_COMPONENTS("FCTIWZ", 0.0);
     OPTEST_2_COMPONENTS("FCTIWZ", 0.5);
     OPTEST_2_COMPONENTS("FCTIWZ", -0.5);
@@ -338,80 +307,320 @@ void PPCFloatingPointTests()
     OPTEST_2_COMPONENTS("FCTIWZ.", -INFINITY);
 
     printf("\nFDIV Variants\n");
-    OPTEST_3_COMPONENTS("FDIV", 0.0, 0.0);
-    OPTEST_3_COMPONENTS("FDIV", 0.0, -0.0);
-    OPTEST_3_COMPONENTS("FDIV", -0.0, -0.0);
-    OPTEST_3_COMPONENTS("FDIV", 1.0, 1.0);
-    OPTEST_3_COMPONENTS("FDIV", 10.0, 5.0);
-    OPTEST_3_COMPONENTS("FDIV", 4.9359998704, 2.4679999352);
-    OPTEST_3_COMPONENTS("FDIV", 2.4679999352, 4.9359998704);
-    OPTEST_3_COMPONENTS("FDIV", FLOAT_SNAN, FLOAT_SNAN);
-    OPTEST_3_COMPONENTS("FDIV", FLOAT_SNAN, FLOAT_QNAN);
-    OPTEST_3_COMPONENTS("FDIV", FLOAT_QNAN, FLOAT_SNAN);
-    OPTEST_3_COMPONENTS("FDIV", FLOAT_QNAN, FLOAT_QNAN);
-    OPTEST_3_COMPONENTS("FDIV", FLOAT_SNAN, INFINITY);
-    OPTEST_3_COMPONENTS("FDIV", FLOAT_QNAN, INFINITY);
-    OPTEST_3_COMPONENTS("FDIV", INFINITY, FLOAT_QNAN);
-    OPTEST_3_COMPONENTS("FDIV", INFINITY, FLOAT_SNAN);
-    OPTEST_3_COMPONENTS("FDIV", FLOAT_SNAN, -INFINITY);
-    OPTEST_3_COMPONENTS("FDIV", FLOAT_QNAN, -INFINITY);
-    OPTEST_3_COMPONENTS("FDIV", -INFINITY, FLOAT_QNAN);
-    OPTEST_3_COMPONENTS("FDIV", -INFINITY, FLOAT_SNAN);
-    OPTEST_3_COMPONENTS("FDIV.", 0.0, 0.0);
-    OPTEST_3_COMPONENTS("FDIV.", 0.0, -0.0);
-    OPTEST_3_COMPONENTS("FDIV.", -0.0, -0.0);
-    OPTEST_3_COMPONENTS("FDIV.", 1.0, 1.0);
-    OPTEST_3_COMPONENTS("FDIV.", 10.0, 5.0);
-    OPTEST_3_COMPONENTS("FDIV.", 4.9359998704, 2.4679999352);
-    OPTEST_3_COMPONENTS("FDIV.", 2.4679999352, 4.9359998704);
-    OPTEST_3_COMPONENTS("FDIV.", FLOAT_SNAN, FLOAT_SNAN);
-    OPTEST_3_COMPONENTS("FDIV.", FLOAT_SNAN, FLOAT_QNAN);
-    OPTEST_3_COMPONENTS("FDIV.", FLOAT_QNAN, FLOAT_SNAN);
-    OPTEST_3_COMPONENTS("FDIV.", FLOAT_QNAN, FLOAT_QNAN);
-    OPTEST_3_COMPONENTS("FDIV.", FLOAT_SNAN, INFINITY);
-    OPTEST_3_COMPONENTS("FDIV.", FLOAT_QNAN, INFINITY);
-    OPTEST_3_COMPONENTS("FDIV.", INFINITY, FLOAT_QNAN);
-    OPTEST_3_COMPONENTS("FDIV.", INFINITY, FLOAT_SNAN);
-    OPTEST_3_COMPONENTS("FDIV.", FLOAT_SNAN, -INFINITY);
-    OPTEST_3_COMPONENTS("FDIV.", FLOAT_QNAN, -INFINITY);
-    OPTEST_3_COMPONENTS("FDIV.", -INFINITY, FLOAT_QNAN);
-    OPTEST_3_COMPONENTS("FDIV.", -INFINITY, FLOAT_SNAN);
-    OPTEST_3_COMPONENTS("FDIVS", 0.0, 0.0);
-    OPTEST_3_COMPONENTS("FDIVS", 0.0, -0.0);
-    OPTEST_3_COMPONENTS("FDIVS", -0.0, -0.0);
-    OPTEST_3_COMPONENTS("FDIVS", 1.0, 1.0);
-    OPTEST_3_COMPONENTS("FDIVS", 10.0, 5.0);
-    OPTEST_3_COMPONENTS("FDIVS", 4.9359998704, 2.4679999352);
-    OPTEST_3_COMPONENTS("FDIVS", 2.4679999352, 4.9359998704);
-    OPTEST_3_COMPONENTS("FDIVS", FLOAT_SNAN, FLOAT_SNAN);
-    OPTEST_3_COMPONENTS("FDIVS", FLOAT_SNAN, FLOAT_QNAN);
-    OPTEST_3_COMPONENTS("FDIVS", FLOAT_QNAN, FLOAT_SNAN);
-    OPTEST_3_COMPONENTS("FDIVS", FLOAT_QNAN, FLOAT_QNAN);
-    OPTEST_3_COMPONENTS("FDIVS", FLOAT_SNAN, INFINITY);
-    OPTEST_3_COMPONENTS("FDIVS", FLOAT_QNAN, INFINITY);
-    OPTEST_3_COMPONENTS("FDIVS", INFINITY, FLOAT_QNAN);
-    OPTEST_3_COMPONENTS("FDIVS", INFINITY, FLOAT_SNAN);
-    OPTEST_3_COMPONENTS("FDIVS", FLOAT_SNAN, -INFINITY);
-    OPTEST_3_COMPONENTS("FDIVS", FLOAT_QNAN, -INFINITY);
-    OPTEST_3_COMPONENTS("FDIVS", -INFINITY, FLOAT_QNAN);
-    OPTEST_3_COMPONENTS("FDIVS", -INFINITY, FLOAT_SNAN);
-    OPTEST_3_COMPONENTS("FDIVS.", 0.0, 0.0);
-    OPTEST_3_COMPONENTS("FDIVS.", 0.0, -0.0);
-    OPTEST_3_COMPONENTS("FDIVS.", -0.0, -0.0);
-    OPTEST_3_COMPONENTS("FDIVS.", 1.0, 1.0);
-    OPTEST_3_COMPONENTS("FDIVS.", 10.0, 5.0);
-    OPTEST_3_COMPONENTS("FDIVS.", 4.9359998704, 2.4679999352);
-    OPTEST_3_COMPONENTS("FDIVS.", 2.4679999352, 4.9359998704);
-    OPTEST_3_COMPONENTS("FDIVS.", FLOAT_SNAN, FLOAT_SNAN);
-    OPTEST_3_COMPONENTS("FDIVS.", FLOAT_SNAN, FLOAT_QNAN);
-    OPTEST_3_COMPONENTS("FDIVS.", FLOAT_QNAN, FLOAT_SNAN);
-    OPTEST_3_COMPONENTS("FDIVS.", FLOAT_QNAN, FLOAT_QNAN);
-    OPTEST_3_COMPONENTS("FDIVS.", FLOAT_SNAN, INFINITY);
-    OPTEST_3_COMPONENTS("FDIVS.", FLOAT_QNAN, INFINITY);
-    OPTEST_3_COMPONENTS("FDIVS.", INFINITY, FLOAT_QNAN);
-    OPTEST_3_COMPONENTS("FDIVS.", INFINITY, FLOAT_SNAN);
-    OPTEST_3_COMPONENTS("FDIVS.", FLOAT_SNAN, -INFINITY);
-    OPTEST_3_COMPONENTS("FDIVS.", FLOAT_QNAN, -INFINITY);
-    OPTEST_3_COMPONENTS("FDIVS.", -INFINITY, FLOAT_QNAN);
-    OPTEST_3_COMPONENTS("FDIVS.", -INFINITY, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV", 0.0, 0.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV", 0.0, -0.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV", -0.0, -0.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV", 1.0, 1.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV", 10.0, 5.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV", 4.9359998704, 2.4679999352);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV", 2.4679999352, 4.9359998704);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV", 2.10195e-044, 2.45208e-029);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV", FLOAT_SNAN, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV", FLOAT_SNAN, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV", FLOAT_QNAN, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV", FLOAT_QNAN, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV", FLOAT_SNAN, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV", FLOAT_QNAN, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV", INFINITY, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV", INFINITY, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV", FLOAT_SNAN, -INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV", FLOAT_QNAN, -INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV", -INFINITY, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV", -INFINITY, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV.", 0.0, 0.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV.", 0.0, -0.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV.", -0.0, -0.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV.", 1.0, 1.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV.", 10.0, 5.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV.", 4.9359998704, 2.4679999352);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV.", 2.4679999352, 4.9359998704);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV.", 2.10195e-044, 2.45208e-029);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV.", FLOAT_SNAN, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV.", FLOAT_SNAN, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV.", FLOAT_QNAN, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV.", FLOAT_QNAN, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV.", FLOAT_SNAN, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV.", FLOAT_QNAN, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV.", INFINITY, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV.", INFINITY, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV.", FLOAT_SNAN, -INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV.", FLOAT_QNAN, -INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV.", -INFINITY, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIV.", -INFINITY, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS", 0.0, 0.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS", 0.0, -0.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS", -0.0, -0.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS", 1.0, 1.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS", 10.0, 5.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS", 4.9359998704, 2.4679999352);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS", 2.4679999352, 4.9359998704);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS", 2.10195e-044, 2.45208e-029);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS", FLOAT_SNAN, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS", FLOAT_SNAN, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS", FLOAT_QNAN, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS", FLOAT_QNAN, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS", FLOAT_SNAN, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS", FLOAT_QNAN, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS", INFINITY, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS", INFINITY, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS", FLOAT_SNAN, -INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS", FLOAT_QNAN, -INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS", -INFINITY, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS", -INFINITY, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS.", 0.0, 0.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS.", 0.0, -0.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS.", -0.0, -0.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS.", 1.0, 1.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS.", 10.0, 5.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS.", 4.9359998704, 2.4679999352);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS.", 2.4679999352, 4.9359998704);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS.", 2.10195e-044, 2.45208e-029);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS.", FLOAT_SNAN, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS.", FLOAT_SNAN, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS.", FLOAT_QNAN, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS.", FLOAT_QNAN, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS.", FLOAT_SNAN, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS.", FLOAT_QNAN, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS.", INFINITY, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS.", INFINITY, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS.", FLOAT_SNAN, -INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS.", FLOAT_QNAN, -INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS.", -INFINITY, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FDIVS.", -INFINITY, FLOAT_SNAN);
+
+    printf("\nFMADD Variants\n");
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADD", 1.0, 1.0, 1.0);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADD", 5.5, 5.5, 5.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADD", 7.3233339282, 7.9999999234, 3.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADD", 6.30584e-044, 3.08286e-044, 1.54143e-044);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADD", 1.0, 1.0, FLOAT_QNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADD", 1.0, 1.0, FLOAT_SNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADD", 1.0, 1.0, INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADD", 1.0, 1.0, -INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADD.", 1.0, 1.0, 1.0);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADD.", 5.5, 5.5, 5.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADD.", 7.3233339282, 7.9999999234, 3.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADD.", 6.30584e-044, 3.08286e-044, 1.54143e-044);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADD.", 1.0, 1.0, FLOAT_QNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADD.", 1.0, 1.0, FLOAT_SNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADD.", 1.0, 1.0, INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADD.", 1.0, 1.0, -INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADDS", 1.0, 1.0, 1.0);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADDS", 5.5, 5.5, 5.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADDS", 7.3233339282, 7.9999999234, 3.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADDS", 6.30584e-044, 3.08286e-044, 1.54143e-044);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADDS", 1.0, 1.0, FLOAT_QNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADDS", 1.0, 1.0, FLOAT_SNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADDS", 1.0, 1.0, INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADDS", 1.0, 1.0, -INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADDS.", 1.0, 1.0, 1.0);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADDS.", 5.5, 5.5, 5.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADDS.", 7.3233339282, 7.9999999234, 3.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADDS.", 6.30584e-044, 3.08286e-044, 1.54143e-044);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADDS.", 1.0, 1.0, FLOAT_QNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADDS.", 1.0, 1.0, FLOAT_SNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADDS.", 1.0, 1.0, INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMADDS.", 1.0, 1.0, -INFINITY);
+
+    printf("\nFMSUB Variants\n");
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUB", 1.0, 1.0, 1.0);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUB", 5.5, 5.5, 5.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUB", 7.3233339282, 7.9999999234, 3.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUB", 6.30584e-044, 3.08286e-044, 1.54143e-044);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUB", 1.0, 1.0, FLOAT_QNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUB", 1.0, 1.0, FLOAT_SNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUB", 1.0, 1.0, INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUB", 1.0, 1.0, -INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUB.", 1.0, 1.0, 1.0);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUB.", 5.5, 5.5, 5.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUB.", 7.3233339282, 7.9999999234, 3.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUB.", 6.30584e-044, 3.08286e-044, 1.54143e-044);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUB.", 1.0, 1.0, FLOAT_QNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUB.", 1.0, 1.0, FLOAT_SNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUB.", 1.0, 1.0, INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUB.", 1.0, 1.0, -INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUBS", 1.0, 1.0, 1.0);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUBS", 5.5, 5.5, 5.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUBS", 7.3233339282, 7.9999999234, 3.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUBS", 6.30584e-044, 3.08286e-044, 1.54143e-044);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUBS", 1.0, 1.0, FLOAT_QNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUBS", 1.0, 1.0, FLOAT_SNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUBS", 1.0, 1.0, INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUBS", 1.0, 1.0, -INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUBS.", 1.0, 1.0, 1.0);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUBS.", 5.5, 5.5, 5.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUBS.", 7.3233339282, 7.9999999234, 3.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUBS.", 6.30584e-044, 3.08286e-044, 1.54143e-044);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUBS.", 1.0, 1.0, FLOAT_QNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUBS.", 1.0, 1.0, FLOAT_SNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUBS.", 1.0, 1.0, INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FMSUBS.", 1.0, 1.0, -INFINITY);
+    
+    printf("\nFMUL Variants\n");
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL", 0.0, 0.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL", -0.0, -0.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL", 5.0, 5.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL", 0.25, 0.35);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL", 2.999999984523, 6.888239210233);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL", 5.0, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL", 5.0, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL", 5.0, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL", 5.0, -INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL", INFINITY, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL", INFINITY, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL", -INFINITY, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL", -INFINITY, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL.", 0.0, 0.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL.", -0.0, -0.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL.", 5.0, 5.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL.", 0.25, 0.35);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL.", 2.999999984523, 6.888239210233);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL.", 5.0, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL.", 5.0, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL.", 5.0, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL.", 5.0, -INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL.", INFINITY, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL.", INFINITY, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL.", -INFINITY, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMUL.", -INFINITY, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS", 0.0, 0.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS", -0.0, -0.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS", 5.0, 5.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS", 0.25, 0.35);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS", 2.999999984523, 6.888239210233);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS", 5.0, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS", 5.0, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS", 5.0, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS", 5.0, -INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS", INFINITY, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS", INFINITY, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS", -INFINITY, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS", -INFINITY, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS.", 0.0, 0.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS.", -0.0, -0.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS.", 5.0, 5.0);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS.", 0.25, 0.35);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS.", 2.999999984523, 6.888239210233);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS.", 5.0, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS.", 5.0, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS.", 5.0, INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS.", 5.0, -INFINITY);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS.", INFINITY, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS.", INFINITY, FLOAT_SNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS.", -INFINITY, FLOAT_QNAN);
+    OPTEST_3_COMPONENTS_WITH_ROUND("FMULS.", -INFINITY, FLOAT_SNAN);
+
+    printf("\nFNABS Variants\n");
+    OPTEST_2_COMPONENTS("FNABS", 0.0);
+    OPTEST_2_COMPONENTS("FNABS", -0.0);
+    OPTEST_2_COMPONENTS("FNABS", -1.0);
+    OPTEST_2_COMPONENTS("FNABS", -std::numeric_limits<float>::min());
+    OPTEST_2_COMPONENTS("FNABS", -std::numeric_limits<float>::max());
+    OPTEST_2_COMPONENTS("FNABS", -std::numeric_limits<double>::min());
+    OPTEST_2_COMPONENTS("FNABS", -std::numeric_limits<double>::max());
+    OPTEST_2_COMPONENTS("FNABS", FLOAT_QNAN);
+    OPTEST_2_COMPONENTS("FNABS", FLOAT_SNAN);
+    OPTEST_2_COMPONENTS("FNABS", INFINITY);
+    OPTEST_2_COMPONENTS("FNABS", -INFINITY);
+    OPTEST_2_COMPONENTS("FNABS.", 0.0);
+    OPTEST_2_COMPONENTS("FNABS.", -0.0);
+    OPTEST_2_COMPONENTS("FNABS.", -1.0);
+    OPTEST_2_COMPONENTS("FNABS.", -std::numeric_limits<float>::min());
+    OPTEST_2_COMPONENTS("FNABS.", -std::numeric_limits<float>::max());
+    OPTEST_2_COMPONENTS("FNABS.", -std::numeric_limits<double>::min());
+    OPTEST_2_COMPONENTS("FNABS.", -std::numeric_limits<double>::max());
+    OPTEST_2_COMPONENTS("FNABS.", FLOAT_QNAN);
+    OPTEST_2_COMPONENTS("FNABS.", FLOAT_SNAN);
+    OPTEST_2_COMPONENTS("FNABS.", INFINITY);
+    OPTEST_2_COMPONENTS("FNABS.", -INFINITY);
+
+    printf("\nFNEG Variants\n");
+    OPTEST_2_COMPONENTS("FNEG", 0.0);
+    OPTEST_2_COMPONENTS("FNEG", -0.0);
+    OPTEST_2_COMPONENTS("FNEG", std::numeric_limits<double>::max());
+    OPTEST_2_COMPONENTS("FNEG", -std::numeric_limits<double>::max());
+    OPTEST_2_COMPONENTS("FNEG", std::numeric_limits<double>::min());
+    OPTEST_2_COMPONENTS("FNEG", -std::numeric_limits<double>::min());
+    OPTEST_2_COMPONENTS("FNEG", DOUBLE_QNAN);
+    OPTEST_2_COMPONENTS("FNEG", DOUBLE_SNAN);
+    OPTEST_2_COMPONENTS("FNEG", INFINITY);
+    OPTEST_2_COMPONENTS("FNEG", INFINITY);
+    OPTEST_2_COMPONENTS("FNEG.", 0.0);
+    OPTEST_2_COMPONENTS("FNEG.", -0.0);
+    OPTEST_2_COMPONENTS("FNEG.", std::numeric_limits<double>::max());
+    OPTEST_2_COMPONENTS("FNEG.", -std::numeric_limits<double>::max());
+    OPTEST_2_COMPONENTS("FNEG.", std::numeric_limits<double>::min());
+    OPTEST_2_COMPONENTS("FNEG.", -std::numeric_limits<double>::min());
+    OPTEST_2_COMPONENTS("FNEG.", DOUBLE_QNAN);
+    OPTEST_2_COMPONENTS("FNEG.", DOUBLE_SNAN);
+    OPTEST_2_COMPONENTS("FNEG.", INFINITY);
+    OPTEST_2_COMPONENTS("FNEG.", INFINITY);
+
+    printf("\nFNMADD Variants\n");
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADD", 1.0, 1.0, 1.0);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADD", 5.5, 5.5, 5.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADD", 7.3233339282, 7.9999999234, 3.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADD", 6.30584e-044, 3.08286e-044, 1.54143e-044);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADD", 1.0, 1.0, FLOAT_QNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADD", 1.0, 1.0, FLOAT_SNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADD", 1.0, 1.0, INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADD", 1.0, 1.0, -INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADD.", 1.0, 1.0, 1.0);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADD.", 5.5, 5.5, 5.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADD.", 7.3233339282, 7.9999999234, 3.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADD.", 6.30584e-044, 3.08286e-044, 1.54143e-044);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADD.", 1.0, 1.0, FLOAT_QNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADD.", 1.0, 1.0, FLOAT_SNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADD.", 1.0, 1.0, INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADD.", 1.0, 1.0, -INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADDS", 1.0, 1.0, 1.0);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADDS", 5.5, 5.5, 5.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADDS", 7.3233339282, 7.9999999234, 3.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADDS", 6.30584e-044, 3.08286e-044, 1.54143e-044);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADDS", 1.0, 1.0, FLOAT_QNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADDS", 1.0, 1.0, FLOAT_SNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADDS", 1.0, 1.0, INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADDS", 1.0, 1.0, -INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADDS.", 1.0, 1.0, 1.0);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADDS.", 5.5, 5.5, 5.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADDS.", 7.3233339282, 7.9999999234, 3.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADDS.", 6.30584e-044, 3.08286e-044, 1.54143e-044);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADDS.", 1.0, 1.0, FLOAT_QNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADDS.", 1.0, 1.0, FLOAT_SNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADDS.", 1.0, 1.0, INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMADDS.", 1.0, 1.0, -INFINITY);
+
+    printf("\nFNMSUB Variants\n");
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUB", 1.0, 1.0, 1.0);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUB", 5.5, 5.5, 5.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUB", 7.3233339282, 7.9999999234, 3.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUB", 6.30584e-044, 3.08286e-044, 1.54143e-044);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUB", 1.0, 1.0, FLOAT_QNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUB", 1.0, 1.0, FLOAT_SNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUB", 1.0, 1.0, INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUB", 1.0, 1.0, -INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUB.", 1.0, 1.0, 1.0);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUB.", 5.5, 5.5, 5.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUB.", 7.3233339282, 7.9999999234, 3.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUB.", 6.30584e-044, 3.08286e-044, 1.54143e-044);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUB.", 1.0, 1.0, FLOAT_QNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUB.", 1.0, 1.0, FLOAT_SNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUB.", 1.0, 1.0, INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUB.", 1.0, 1.0, -INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUBS", 1.0, 1.0, 1.0);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUBS", 5.5, 5.5, 5.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUBS", 7.3233339282, 7.9999999234, 3.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUBS", 6.30584e-044, 3.08286e-044, 1.54143e-044);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUBS", 1.0, 1.0, FLOAT_QNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUBS", 1.0, 1.0, FLOAT_SNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUBS", 1.0, 1.0, INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUBS", 1.0, 1.0, -INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUBS.", 1.0, 1.0, 1.0);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUBS.", 5.5, 5.5, 5.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUBS.", 7.3233339282, 7.9999999234, 3.5);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUBS.", 6.30584e-044, 3.08286e-044, 1.54143e-044);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUBS.", 1.0, 1.0, FLOAT_QNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUBS.", 1.0, 1.0, FLOAT_SNAN);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUBS.", 1.0, 1.0, INFINITY);
+    OPTEST_4_COMPONENTS_WITH_ROUND("FNMSUBS.", 1.0, 1.0, -INFINITY);
 }
