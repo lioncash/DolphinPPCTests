@@ -46,6 +46,19 @@ static void SetXER(u32 value)
            inst, output, rA, rB, GetXER(), GetCR());                                            \
 }
 
+// Test for a 3-component instruction, whhere the third component is an immediate.
+#define OPTEST_3_COMPONENTS_IMM(inst, rA, imm)                                                     \
+{                                                                                                  \
+    u32 output;                                                                                    \
+                                                                                                   \
+    SetCR(0);                                                                                      \
+    SetXER(0);                                                                                     \
+    asm volatile (inst " %[out], %[Ra], %[Imm]": [out]"=&r"(output) : [Ra]"r"(rA), [Imm]"i"(imm)); \
+                                                                                                   \
+    printf("%-8s :: rD 0x%08X | rA 0x%08X | imm 0x%08X | XER: 0x%08X | CR: 0x%08X\n",              \
+           inst, output, rA, imm, GetXER(), GetCR());                                              \
+}
+
 // Used for testing the CMP instructions.
 // Stores result to cr0.
 #define OPTEST_3_COMPONENTS_CMP(inst, rA, rB)                             \
@@ -59,6 +72,17 @@ static void SetXER(u32 value)
                                                                           \
     printf("%-8s :: rA 0x%08X | rB 0x%08X | XER: 0x%08X | CR: 0x%08X\n",  \
            inst, rA, rB, GetXER(), GetCR());                              \
+}
+
+// Used for testing the immediate variants of CMP.
+#define OPTEST_3_COMPONENTS_CMP_IMM(inst, rA, imm)                           \
+{                                                                            \
+    SetCR(0);                                                                \
+    SetXER(0);                                                               \
+    asm volatile (inst " cr0, %[Ra], %[Imm]": : [Ra]"r"(rA), [Imm]"i"(imm)); \
+                                                                             \
+    printf("%-8s :: rA 0x%08X | imm 0x%08X | XER: 0x%08X | CR: 0x%08X\n",    \
+           inst, rA, imm, GetXER(), GetCR());                                \
 }
 
 // Test for a 5-component instruction (sets the rD before the operation).
@@ -141,21 +165,21 @@ void PPCIntegerTests()
     OPTEST_3_COMPONENTS("ADDEO.", -1, -1);
     OPTEST_3_COMPONENTS("ADDEO.", 1, 0);
     OPTEST_3_COMPONENTS("ADDEO.", 0, -1);
-    OPTEST_3_COMPONENTS("ADDI", 0xFFFFFFFF, 1);
-    OPTEST_3_COMPONENTS("ADDI", -1, 1);
-    OPTEST_3_COMPONENTS("ADDI", -1, -1);
-    OPTEST_3_COMPONENTS("ADDI", 1, 0);
-    OPTEST_3_COMPONENTS("ADDI", 0, -1);
-    OPTEST_3_COMPONENTS("ADDIC", 0xFFFFFFFF, 1);
-    OPTEST_3_COMPONENTS("ADDIC", -1, 1);
-    OPTEST_3_COMPONENTS("ADDIC", -1, -1);
-    OPTEST_3_COMPONENTS("ADDIC", 1, 0);
-    OPTEST_3_COMPONENTS("ADDIC", 0, -1);
-    OPTEST_3_COMPONENTS("ADDIS", 0xFFFFFFFF, 1);
-    OPTEST_3_COMPONENTS("ADDIS", -1, 1);
-    OPTEST_3_COMPONENTS("ADDIS", -1, -1);
-    OPTEST_3_COMPONENTS("ADDIS", 1, 0);
-    OPTEST_3_COMPONENTS("ADDIS", 0, -1);
+    OPTEST_3_COMPONENTS_IMM("ADDI", 0xFFFFFFFF, 1);
+    OPTEST_3_COMPONENTS_IMM("ADDI", -1, 1);
+    OPTEST_3_COMPONENTS_IMM("ADDI", -1, -1);
+    OPTEST_3_COMPONENTS_IMM("ADDI", 1, 0);
+    OPTEST_3_COMPONENTS_IMM("ADDI", 0, -1);
+    OPTEST_3_COMPONENTS_IMM("ADDIC", 0xFFFFFFFF, 1);
+    OPTEST_3_COMPONENTS_IMM("ADDIC", -1, 1);
+    OPTEST_3_COMPONENTS_IMM("ADDIC", -1, -1);
+    OPTEST_3_COMPONENTS_IMM("ADDIC", 1, 0);
+    OPTEST_3_COMPONENTS_IMM("ADDIC", 0, -1);
+    OPTEST_3_COMPONENTS_IMM("ADDIS", 0xFFFFFFFF, 1);
+    OPTEST_3_COMPONENTS_IMM("ADDIS", -1, 1);
+    OPTEST_3_COMPONENTS_IMM("ADDIS", -1, -1);
+    OPTEST_3_COMPONENTS_IMM("ADDIS", 1, 0);
+    OPTEST_3_COMPONENTS_IMM("ADDIS", 0, -1);
     OPTEST_2_COMPONENTS("ADDME", 0xFFFFFFFF);
     OPTEST_2_COMPONENTS("ADDME", -1);
     OPTEST_2_COMPONENTS("ADDME", 1);
@@ -216,16 +240,16 @@ void PPCIntegerTests()
     OPTEST_3_COMPONENTS("ANDC.", 1, 1);
     OPTEST_3_COMPONENTS("ANDC.", 0xFFFFFFFF, 0);
     OPTEST_3_COMPONENTS("ANDC.", 0xFFFFFFFF, 1);
-    OPTEST_3_COMPONENTS("ANDI.", 0, 0);
-    OPTEST_3_COMPONENTS("ANDI.", 0, 1);
-    OPTEST_3_COMPONENTS("ANDI.", 1, 1);
-    OPTEST_3_COMPONENTS("ANDI.", 0xFFFFFFFF, 0);
-    OPTEST_3_COMPONENTS("ANDI.", 0xFFFFFFFF, 1);
-    OPTEST_3_COMPONENTS("ANDIS.", 0, 0);
-    OPTEST_3_COMPONENTS("ANDIS.", 0, 1);
-    OPTEST_3_COMPONENTS("ANDIS.", 1, 1);
-    OPTEST_3_COMPONENTS("ANDIS.", 0xFFFFFFFF, 0);
-    OPTEST_3_COMPONENTS("ANDIS.", 0xFFFFFFFF, 1);
+    OPTEST_3_COMPONENTS_IMM("ANDI.", 0, 0);
+    OPTEST_3_COMPONENTS_IMM("ANDI.", 0, 1);
+    OPTEST_3_COMPONENTS_IMM("ANDI.", 1, 1);
+    OPTEST_3_COMPONENTS_IMM("ANDI.", 0xFFFFFFFF, 0);
+    OPTEST_3_COMPONENTS_IMM("ANDI.", 0xFFFFFFFF, 1);
+    OPTEST_3_COMPONENTS_IMM("ANDIS.", 0, 0);
+    OPTEST_3_COMPONENTS_IMM("ANDIS.", 0, 1);
+    OPTEST_3_COMPONENTS_IMM("ANDIS.", 1, 1);
+    OPTEST_3_COMPONENTS_IMM("ANDIS.", 0xFFFFFFFF, 0);
+    OPTEST_3_COMPONENTS_IMM("ANDIS.", 0xFFFFFFFF, 1);
 
     printf("\nCMP Variants\n");
     OPTEST_3_COMPONENTS_CMP("CMP", 0, 0);
@@ -233,21 +257,21 @@ void PPCIntegerTests()
     OPTEST_3_COMPONENTS_CMP("CMP", 1, 0);
     OPTEST_3_COMPONENTS_CMP("CMP", 0x7FFFFFFF, 0x7FFFFFFF);
     OPTEST_3_COMPONENTS_CMP("CMP", 0xFFFFFFFF, 0xFFFFFFFF);
-    OPTEST_3_COMPONENTS_CMP("CMPI", 0, 0);
-    OPTEST_3_COMPONENTS_CMP("CMPI", 0, 1);
-    OPTEST_3_COMPONENTS_CMP("CMPI", 1, 0);
-    OPTEST_3_COMPONENTS_CMP("CMPI", 0x7FFFFFFF, 0x7FFFFFFF);
-    OPTEST_3_COMPONENTS_CMP("CMPI", 0xFFFFFFFF, 0xFFFFFFFF);
+    OPTEST_3_COMPONENTS_CMP_IMM("CMPI", 0, 0);
+    OPTEST_3_COMPONENTS_CMP_IMM("CMPI", 0, 1);
+    OPTEST_3_COMPONENTS_CMP_IMM("CMPI", 1, 0);
+    OPTEST_3_COMPONENTS_CMP_IMM("CMPI", 0x7FFF, 0x7FFF);
+    OPTEST_3_COMPONENTS_CMP_IMM("CMPI", 0x2FFF, 0x1FFF);
     OPTEST_3_COMPONENTS_CMP("CMPL", 0, 0);
     OPTEST_3_COMPONENTS_CMP("CMPL", 0, 1);
     OPTEST_3_COMPONENTS_CMP("CMPL", 1, 0);
     OPTEST_3_COMPONENTS_CMP("CMPL", 0x7FFFFFFF, 0x7FFFFFFF);
     OPTEST_3_COMPONENTS_CMP("CMPL", 0xFFFFFFFF, 0xFFFFFFFF);
-    OPTEST_3_COMPONENTS_CMP("CMPLI", 0, 0);
-    OPTEST_3_COMPONENTS_CMP("CMPLI", 0, 1);
-    OPTEST_3_COMPONENTS_CMP("CMPLI", 1, 0);
-    OPTEST_3_COMPONENTS_CMP("CMPLI", 0x7FFFFFFF, 0x7FFFFFFF);
-    OPTEST_3_COMPONENTS_CMP("CMPLI", 0xFFFFFFFF, 0xFFFFFFFF);
+    OPTEST_3_COMPONENTS_CMP_IMM("CMPLI", 0, 0);
+    OPTEST_3_COMPONENTS_CMP_IMM("CMPLI", 0, 1);
+    OPTEST_3_COMPONENTS_CMP_IMM("CMPLI", 1, 0);
+    OPTEST_3_COMPONENTS_CMP_IMM("CMPLI", 0x7FFF, 0x7FFF);
+    OPTEST_3_COMPONENTS_CMP_IMM("CMPLI", 0x2FFF, 0x1FFF);
 
     printf("\nCNTLZW Variants\n");
     for (int i = 0; i < 32; i++)
@@ -394,13 +418,13 @@ void PPCIntegerTests()
     OPTEST_3_COMPONENTS("MULHWU.", 0xFFFFFFFF, 0xFFFFFFFF);
 
     printf("\nMULLI\n");
-    OPTEST_3_COMPONENTS("MULLI", 0, 0);
-    OPTEST_3_COMPONENTS("MULLI", 50, 50);
-    OPTEST_3_COMPONENTS("MULLI", 0x7FFF, 0x7FFF);
-    OPTEST_3_COMPONENTS("MULLI", 0xFFFF, 0xFFFF);
-    OPTEST_3_COMPONENTS("MULLI", 0x7FFFFFFF, 0x7FFFFFFF);
-    OPTEST_3_COMPONENTS("MULLI", 0x80000000, 0x80000000);
-    OPTEST_3_COMPONENTS("MULLI", 0xFFFFFFFF, 0xFFFFFFFF);
+    OPTEST_3_COMPONENTS_IMM("MULLI", 0, 0);
+    OPTEST_3_COMPONENTS_IMM("MULLI", 50, 50);
+    OPTEST_3_COMPONENTS_IMM("MULLI", 0x7FFF, 0x7FFF);
+    OPTEST_3_COMPONENTS_IMM("MULLI", 0xFFFF, 0x7FFF);
+    OPTEST_3_COMPONENTS_IMM("MULLI", 0x7FFFFFFF, 0x7FFF);
+    OPTEST_3_COMPONENTS_IMM("MULLI", 0x80000000, 0x7FFF);
+    OPTEST_3_COMPONENTS_IMM("MULLI", 0xFFFFFFFF, 0x7FFF);
 
     printf("\nMULLW Variants\n");
     OPTEST_3_COMPONENTS("MULLW", 0, 0);
@@ -521,20 +545,20 @@ void PPCIntegerTests()
     OPTEST_3_COMPONENTS("ORC.", 0x7FFFFFFF, 0x7FFFFFFF);
     OPTEST_3_COMPONENTS("ORC.", 0x80000000, 0x80000000);
     OPTEST_3_COMPONENTS("ORC.", 0xFFFFFFFF, 0xFFFFFFFF);
-    OPTEST_3_COMPONENTS("ORI", 0, 0);
-    OPTEST_3_COMPONENTS("ORI", 0, 1);
-    OPTEST_3_COMPONENTS("ORI", 1, 0);
-    OPTEST_3_COMPONENTS("ORI", 1, 1);
-    OPTEST_3_COMPONENTS("ORI", 0x7FFFFFFF, 0x7FFFFFFF);
-    OPTEST_3_COMPONENTS("ORI", 0x80000000, 0x80000000);
-    OPTEST_3_COMPONENTS("ORI", 0xFFFFFFFF, 0xFFFFFFFF);
-    OPTEST_3_COMPONENTS("ORIS", 0, 0);
-    OPTEST_3_COMPONENTS("ORIS", 0, 1);
-    OPTEST_3_COMPONENTS("ORIS", 1, 0);
-    OPTEST_3_COMPONENTS("ORIS", 1, 1);
-    OPTEST_3_COMPONENTS("ORIS", 0x7FFFFFFF, 0x7FFFFFFF);
-    OPTEST_3_COMPONENTS("ORIS", 0x80000000, 0x80000000);
-    OPTEST_3_COMPONENTS("ORIS", 0xFFFFFFFF, 0xFFFFFFFF);
+    OPTEST_3_COMPONENTS_IMM("ORI", 0, 0);
+    OPTEST_3_COMPONENTS_IMM("ORI", 0, 1);
+    OPTEST_3_COMPONENTS_IMM("ORI", 1, 0);
+    OPTEST_3_COMPONENTS_IMM("ORI", 1, 1);
+    OPTEST_3_COMPONENTS_IMM("ORI", 1, 0x1FFF);
+    OPTEST_3_COMPONENTS_IMM("ORI", 1, 0x3FFF);
+    OPTEST_3_COMPONENTS_IMM("ORI", 1, 0x7FFF);
+    OPTEST_3_COMPONENTS_IMM("ORIS", 0, 0);
+    OPTEST_3_COMPONENTS_IMM("ORIS", 0, 1);
+    OPTEST_3_COMPONENTS_IMM("ORIS", 1, 0);
+    OPTEST_3_COMPONENTS_IMM("ORIS", 1, 1);
+    OPTEST_3_COMPONENTS_IMM("ORIS", 1, 0x1FFF);
+    OPTEST_3_COMPONENTS_IMM("ORIS", 1, 0x3FFF);
+    OPTEST_3_COMPONENTS_IMM("ORIS", 1, 0x7FFF);
 
     printf("\nRL[x] Variants\n");
     for (int i = 0; i <= 31; i++)
@@ -701,12 +725,12 @@ void PPCIntegerTests()
     OPTEST_3_COMPONENTS("SUBFEO.", 0x7FFFFFFF, 0xFFFFFFFF);
     OPTEST_3_COMPONENTS("SUBFEO.", 0xFFFFFFFF, 0xFFFFFFFF);
 
-    OPTEST_3_COMPONENTS("SUBFIC", 0, 0);
-    OPTEST_3_COMPONENTS("SUBFIC", 0, 1);
-    OPTEST_3_COMPONENTS("SUBFIC", 1, 0);
-    OPTEST_3_COMPONENTS("SUBFIC", 1, 1);
-    OPTEST_3_COMPONENTS("SUBFIC", 0x7FFFFFFF, 0xFFFFFFFF);
-    OPTEST_3_COMPONENTS("SUBFIC", 0xFFFFFFFF, 0xFFFFFFFF);
+    OPTEST_3_COMPONENTS_IMM("SUBFIC", 0, 0);
+    OPTEST_3_COMPONENTS_IMM("SUBFIC", 0, 1);
+    OPTEST_3_COMPONENTS_IMM("SUBFIC", 1, 0);
+    OPTEST_3_COMPONENTS_IMM("SUBFIC", 1, 1);
+    OPTEST_3_COMPONENTS_IMM("SUBFIC", 0x7FFFFFFF, 0x7FFF);
+    OPTEST_3_COMPONENTS_IMM("SUBFIC", 0xFFFFFFFF, 0x7FFF);
 
     OPTEST_2_COMPONENTS("SUBFME", 0);
     OPTEST_2_COMPONENTS("SUBFME", 1);
@@ -760,24 +784,24 @@ void PPCIntegerTests()
     OPTEST_3_COMPONENTS("XOR", 0, 1);
     OPTEST_3_COMPONENTS("XOR", 1, 0);
     OPTEST_3_COMPONENTS("XOR", 1, 1);
-    OPTEST_3_COMPONENTS("XOR", 0xFFFFFFFF, 0x7FFFFFFF);
-    OPTEST_3_COMPONENTS("XOR", 0xFFFFFFFF, 0xFFFFFFFF);
+    OPTEST_3_COMPONENTS("XOR", 0xFFFFFFFF, 0x1FFF);
+    OPTEST_3_COMPONENTS("XOR", 0xFFFFFFFF, 0x3FFF);
     OPTEST_3_COMPONENTS("XOR.", 0, 0);
     OPTEST_3_COMPONENTS("XOR.", 0, 1);
     OPTEST_3_COMPONENTS("XOR.", 1, 0);
     OPTEST_3_COMPONENTS("XOR.", 1, 1);
-    OPTEST_3_COMPONENTS("XOR.", 0xFFFFFFFF, 0x7FFFFFFF);
-    OPTEST_3_COMPONENTS("XOR.", 0xFFFFFFFF, 0xFFFFFFFF);
-    OPTEST_3_COMPONENTS("XORI", 0, 0);
-    OPTEST_3_COMPONENTS("XORI", 0, 1);
-    OPTEST_3_COMPONENTS("XORI", 1, 0);
-    OPTEST_3_COMPONENTS("XORI", 1, 1);
-    OPTEST_3_COMPONENTS("XORI", 0xFFFFFFFF, 0x7FFFFFFF);
-    OPTEST_3_COMPONENTS("XORI", 0xFFFFFFFF, 0xFFFFFFFF);
-    OPTEST_3_COMPONENTS("XORIS", 0, 0);
-    OPTEST_3_COMPONENTS("XORIS", 0, 1);
-    OPTEST_3_COMPONENTS("XORIS", 1, 0);
-    OPTEST_3_COMPONENTS("XORIS", 1, 1);
-    OPTEST_3_COMPONENTS("XORIS", 0xFFFFFFFF, 0x7FFFFFFF);
-    OPTEST_3_COMPONENTS("XORIS", 0xFFFFFFFF, 0xFFFFFFFF);
+    OPTEST_3_COMPONENTS("XOR.", 0xFFFFFFFF, 0x1FFF);
+    OPTEST_3_COMPONENTS("XOR.", 0xFFFFFFFF, 0x3FFF);
+    OPTEST_3_COMPONENTS_IMM("XORI", 0, 0);
+    OPTEST_3_COMPONENTS_IMM("XORI", 0, 1);
+    OPTEST_3_COMPONENTS_IMM("XORI", 1, 0);
+    OPTEST_3_COMPONENTS_IMM("XORI", 1, 1);
+    OPTEST_3_COMPONENTS_IMM("XORI", 0xFFFFFFFF, 0x1FFF);
+    OPTEST_3_COMPONENTS_IMM("XORI", 0xFFFFFFFF, 0x3FFF);
+    OPTEST_3_COMPONENTS_IMM("XORIS", 0, 0);
+    OPTEST_3_COMPONENTS_IMM("XORIS", 0, 1);
+    OPTEST_3_COMPONENTS_IMM("XORIS", 1, 0);
+    OPTEST_3_COMPONENTS_IMM("XORIS", 1, 1);
+    OPTEST_3_COMPONENTS_IMM("XORIS", 0xFFFFFFFF, 0x1FFF);
+    OPTEST_3_COMPONENTS_IMM("XORIS", 0xFFFFFFFF, 0x3FFF);
 }
