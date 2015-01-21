@@ -181,11 +181,6 @@ void PPCIntegerTests()
     OPTEST_2_COMPONENTS("ADDME.", -1);
     OPTEST_2_COMPONENTS("ADDME.", 1);
     OPTEST_2_COMPONENTS("ADDME.", 0);
-
-// These manage to crash dolphin on the JIT.
-// On the interpreter it fires panic alerts but does not crash.
-// Guess overflow flags aren't implemented or something.
-#if 0
     OPTEST_2_COMPONENTS("ADDMEO", 0xFFFFFFFF);
     OPTEST_2_COMPONENTS("ADDMEO", -1);
     OPTEST_2_COMPONENTS("ADDMEO", 1);
@@ -194,7 +189,6 @@ void PPCIntegerTests()
     OPTEST_2_COMPONENTS("ADDMEO.", -1);
     OPTEST_2_COMPONENTS("ADDMEO.", 1);
     OPTEST_2_COMPONENTS("ADDMEO.", 0);
-#endif
     OPTEST_2_COMPONENTS("ADDZE", 0xFFFFFFFF);
     OPTEST_2_COMPONENTS("ADDZE", -1);
     OPTEST_2_COMPONENTS("ADDZE", 1);
