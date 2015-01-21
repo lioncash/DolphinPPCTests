@@ -20,11 +20,10 @@ static void SetXER(u32 value)
 #define OPTEST_2_COMPONENTS(inst, rA)                                        \
 {                                                                            \
     u32 output;                                                              \
-    u32 ra = rA;                                                             \
                                                                              \
     SetXER(0);                                                               \
     SetCR(0);                                                                \
-    asm volatile (inst " %[out], %[Ra]": [out]"=&r"(output) : [Ra]"r"(ra));  \
+    asm volatile (inst " %[out], %[Ra]": [out]"=&r"(output) : [Ra]"r"(rA));  \
                                                                              \
     printf("%-8s :: rD 0x%08X | rA 0x%08X | XER: 0x%08X | CR: 0x%08X\n",     \
            inst, output, rA, GetXER(), GetCR());                             \
@@ -35,12 +34,10 @@ static void SetXER(u32 value)
 #define OPTEST_3_COMPONENTS(inst, rA, rB)                                                       \
 {                                                                                               \
     u32 output;                                                                                 \
-    u32 ra = rA;                                                                                \
-    u32 rb = rB;                                                                                \
                                                                                                 \
     SetCR(0);                                                                                   \
     SetXER(0);                                                                                  \
-    asm volatile (inst " %[out], %[Ra], %[Rb]": [out]"=&r"(output) : [Ra]"r"(ra), [Rb]"r"(rb)); \
+    asm volatile (inst " %[out], %[Ra], %[Rb]": [out]"=&r"(output) : [Ra]"r"(rA), [Rb]"r"(rB)); \
                                                                                                 \
     printf("%-8s :: rD 0x%08X | rA 0x%08X | rB 0x%08X | XER: 0x%08X | CR: 0x%08X\n",            \
            inst, output, rA, rB, GetXER(), GetCR());                                            \
@@ -63,12 +60,9 @@ static void SetXER(u32 value)
 // Stores result to cr0.
 #define OPTEST_3_COMPONENTS_CMP(inst, rA, rB)                             \
 {                                                                         \
-    u32 ra = rA;                                                          \
-    u32 rb = rB;                                                          \
-                                                                          \
     SetCR(0);                                                             \
     SetXER(0);                                                            \
-    asm volatile (inst " cr0, %[Ra], %[Rb]": : [Ra]"r"(ra), [Rb]"r"(rb)); \
+    asm volatile (inst " cr0, %[Ra], %[Rb]": : [Ra]"r"(rA), [Rb]"r"(rB)); \
                                                                           \
     printf("%-8s :: rA 0x%08X | rB 0x%08X | XER: 0x%08X | CR: 0x%08X\n",  \
            inst, rA, rB, GetXER(), GetCR());                              \
@@ -90,13 +84,12 @@ static void SetXER(u32 value)
 #define OPTEST_5_COMPONENTS(inst, rA, rS, SH, MB, ME)                                                          \
 {                                                                                                              \
     u32 output = rA;                                                                                           \
-    u32 rs = rS;                                                                                               \
                                                                                                                \
     SetCR(0);                                                                                                  \
     SetXER(0);                                                                                                 \
     asm volatile (inst " %[out], %[Rs], %[Sh], %[Mb], %[Me]"                                                   \
         : [out]"+&r"(output)                                                                                   \
-        : [Rs]"r"(rs), [Sh]"r"(SH), [Mb]"r"(MB), [Me]"r"(ME));                                                 \
+        : [Rs]"r"(rS), [Sh]"r"(SH), [Mb]"r"(MB), [Me]"r"(ME));                                                 \
                                                                                                                \
     printf("%-8s :: rD 0x%08X | rS 0x%08X | SH 0x%08X | MB: 0x%08X | ME: 0x%08X | XER: 0x%08X | CR: 0x%08X\n", \
            inst, output, rS, SH, MB, ME, GetXER(), GetCR());                                                   \
