@@ -568,7 +568,9 @@ void PPCIntegerTests()
         OPTEST_5_COMPONENTS("RLWIMI.", 0x7FFFFFFF, 30, i, 20, 30);
         OPTEST_5_COMPONENTS("RLWIMI.", 0x80000000, 30, i, 20, 30);
         OPTEST_5_COMPONENTS("RLWIMI.", 0xFFFFFFFF, 30, i, 20, 30);
-
+    }
+    for (int i = 0; i <= 31; i++)
+    {
         OPTEST_5_COMPONENTS("RLWINM", 0x7FFFFFFF, 30, i, 0, 10);
         OPTEST_5_COMPONENTS("RLWINM", 0x80000000, 30, i, 0, 10);
         OPTEST_5_COMPONENTS("RLWINM", 0xFFFFFFFF, 30, i, 0, 10);
@@ -601,7 +603,9 @@ void PPCIntegerTests()
         OPTEST_3_COMPONENTS("SLW.", 1, i);
         OPTEST_3_COMPONENTS("SLW.", 0x7FFFFFFF, i);
         OPTEST_3_COMPONENTS("SLW.", 0xFFFFFFFF, i);
-
+    }
+    for (int i = 0; i <= 32; i++)
+    {
         OPTEST_3_COMPONENTS("SRAW", i, i);
         OPTEST_3_COMPONENTS("SRAW", 1, i);
         OPTEST_3_COMPONENTS("SRAW", 0x7FFFFFFF, i);
@@ -610,7 +614,9 @@ void PPCIntegerTests()
         OPTEST_3_COMPONENTS("SRAW.", 1, i);
         OPTEST_3_COMPONENTS("SRAW.", 0x7FFFFFFF, i);
         OPTEST_3_COMPONENTS("SRAW.", 0xFFFFFFFF, i);
-
+    }
+    for (int i = 0; i <= 32; i++)
+    {
         OPTEST_3_COMPONENTS("SRAWI", i, i);
         OPTEST_3_COMPONENTS("SRAWI", 1, i);
         OPTEST_3_COMPONENTS("SRAWI", 0x7FFFFFFF, i);
@@ -619,7 +625,9 @@ void PPCIntegerTests()
         OPTEST_3_COMPONENTS("SRAWI.", 1, i);
         OPTEST_3_COMPONENTS("SRAWI.", 0x7FFFFFFF, i);
         OPTEST_3_COMPONENTS("SRAWI.", 0xFFFFFFFF, i);
-
+    }
+    for (int i = 0; i <= 32; i++)
+    {
         OPTEST_3_COMPONENTS("SRW", i, i);
         OPTEST_3_COMPONENTS("SRW", 1, i);
         OPTEST_3_COMPONENTS("SRW", 0x7FFFFFFF, i);
