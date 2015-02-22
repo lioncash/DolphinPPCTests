@@ -154,8 +154,32 @@ static u32 GetFPSCR()
     }                                                                                      \
 }
 
+// Tests if floating point comparison functions (FCMPO/FCMPU) preserve the class bit when setting the FPCC bits.
+static void FPRFClassBitTest()
+{
+    double qnan_1 = DOUBLE_QNAN;
+    double qnan_2 = DOUBLE_QNAN;
+
+    // "MTFSB1 15" sets the class bit in the FPRF. If FCMPO and FCMPU are implemented wrong, then this
+    // value will get steamrolled.
+
+    ClearFPSCR();
+    asm volatile ("MTFSB1 15\n"
+                  "FCMPO cr1, %[frA], %[frB]" :: [frA]"f"(qnan_1), [frB]"f"(qnan_2));
+    printf("FCMPO :: frA %e | frB %e | FPSCR: 0x%08X | CR: 0x%08X\n", qnan_1, qnan_2, GetFPSCR(), GetCR());
+
+    ClearFPSCR();
+    asm volatile ("MTFSB1 15\n"
+                  "FCMPU cr1, %[frA], %[frB]" :: [frA]"f"(qnan_1), [frB]"f"(qnan_2));
+    printf("FCMPU :: frA %e | frB %e | FPSCR: 0x%08X | CR: 0x%08X\n", qnan_1, qnan_2, GetFPSCR(), GetCR());
+}
+
 void PPCFloatingPointTests()
 {
+    // Run specialized tests first.
+    printf("FPRF Class Bit Preservation Tests\n");
+    FPRFClassBitTest();
+
     printf("FABS Variants\n");
     OPTEST_2_COMPONENTS("FABS", 0.0);
     OPTEST_2_COMPONENTS("FABS", -0.0);
