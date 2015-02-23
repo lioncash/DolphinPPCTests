@@ -43,7 +43,7 @@ static void SetXER(u32 value)
            inst, output, rA, rB, GetXER(), GetCR());                                            \
 }
 
-// Test for a 3-component instruction, whhere the third component is an immediate.
+// Test for a 3-component instruction, where the third component is an immediate.
 #define OPTEST_3_COMPONENTS_IMM(inst, rA, imm)                                                     \
 {                                                                                                  \
     u32 output;                                                                                    \
@@ -264,6 +264,9 @@ void PPCIntegerTests()
     for (int i = 0; i < 32; i++)
     {
         OPTEST_2_COMPONENTS("CNTLZW", (1 << i));
+    }
+    for (int i = 0; i < 32; i++)
+    {
         OPTEST_2_COMPONENTS("CNTLZW.", (1 << i));
     }
 
