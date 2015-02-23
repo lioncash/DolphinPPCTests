@@ -261,13 +261,13 @@ void PPCIntegerTests()
     OPTEST_3_COMPONENTS_CMP_IMM("CMPLI", 0x2FFF, 0x1FFF);
 
     printf("\nCNTLZW Variants\n");
-    for (int i = 0; i < 32; i++)
+    for (u32 i = 0; i < 32; i++)
     {
-        OPTEST_2_COMPONENTS("CNTLZW", (1 << i));
+        OPTEST_2_COMPONENTS("CNTLZW", (1U << i));
     }
-    for (int i = 0; i < 32; i++)
+    for (u32 i = 0; i < 32; i++)
     {
-        OPTEST_2_COMPONENTS("CNTLZW.", (1 << i));
+        OPTEST_2_COMPONENTS("CNTLZW.", (1U << i));
     }
 
     //
