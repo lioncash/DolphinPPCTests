@@ -333,10 +333,6 @@ void PPCIntegerTests()
     OPTEST_3_COMPONENTS("DIVWUO.", 0xFFFFFFFF, 0x80000000);
     OPTEST_3_COMPONENTS("DIVWUO.", 0xFFFFFFFF, 0xFFFFFFFF);
 
-    //
-    // TODO: Tests for ECIWX, ECOWX, and (old McDonald had a farm) EIEIO
-    //
-
     printf("\nEQV Variants\n");
     OPTEST_3_COMPONENTS("EQV", 0, 0);
     OPTEST_3_COMPONENTS("EQV", 1, 1);
@@ -641,10 +637,6 @@ void PPCIntegerTests()
         OPTEST_3_COMPONENTS("SRW.", 0xFFFFFFFF, i);
     }
 
-    //
-    // TODO: Tests for storage and string instructions.
-    //
-
     printf("\nSUBF Variants\n");
     OPTEST_3_COMPONENTS("SUBF", 0, 0);
     OPTEST_3_COMPONENTS("SUBF", 0, 1);
@@ -771,11 +763,6 @@ void PPCIntegerTests()
     OPTEST_2_COMPONENTS("SUBFZEO.", 0x7FFFFFFF);
     OPTEST_2_COMPONENTS("SUBFZEO.", 0x80000000);
     OPTEST_2_COMPONENTS("SUBFZEO.", 0xFFFFFFFF);
-
-    //
-    // TODO: Maybe do tests for SYNC/TLBIE/TLBSYNC
-    // TODO: Somehow test TW/TWI
-    //
 
     printf("\nXOR Variants\n");
     OPTEST_3_COMPONENTS("XOR", 0, 0);
