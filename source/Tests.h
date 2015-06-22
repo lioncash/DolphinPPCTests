@@ -14,13 +14,13 @@ typedef uint64_t u64;
 static inline u32 GetCR()
 {
     u32 reg;
-    asm volatile ("mfcr %[out]" : [out]"=b"(reg));
+    asm volatile ("mfcr %[out]" : [out]"=&r"(reg));
     return reg;
 }
 
 static inline void SetCR(u32 value)
 {
-    asm volatile ("mtcr %[val]" : : [val]"b"(value) : "cr0", "cr1", "cr2", "cr3", "cr4", "cr5", "cr6", "cr7");
+    asm volatile ("mtcr %[val]" : : [val]"r"(value) : "cr0", "cr1", "cr2", "cr3", "cr4", "cr5", "cr6", "cr7");
 }
 
 void PPCFloatingPointTests();
