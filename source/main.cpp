@@ -12,6 +12,9 @@ static FILE* f = nullptr;
 
 static ssize_t file_write(_reent* r, int fd, const char* ptr, size_t len)
 {
+    (void)r;
+    (void)fd;
+
     if (len > 1)
         fprintf(f, "%.*s", len, ptr);
 
@@ -24,6 +27,23 @@ static const devoptab_t dotab_file = {
     nullptr,
     nullptr,
     file_write,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    0,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
     nullptr,
     nullptr,
     nullptr
