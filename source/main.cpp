@@ -58,7 +58,7 @@ static void Initialize()
 
 static bool TryOpenFile(const char* path)
 {
-    f = fopen("instruction_tests.txt", "w");
+    f = fopen(path, "w");
     if (f == nullptr)
     {
         printf("Unable to open: %s\n", path);
