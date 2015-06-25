@@ -49,7 +49,7 @@ static inline u32 GetShiftValue(u32 mask)
 #define SetCRField(cr_mask, value) \
     asm volatile ("mtcrf %[mask], %[val]" :: [mask]"I"(cr_mask), [val]"r"(value << GetShiftValue(cr_mask)))
 
-// Since we evaluate all of the bits of a 4-bit, this simplifies resetting the clean test state.
+// Since we evaluate all of the bits of a 4-bit field, this simplifies resetting the clean test state.
 #define SetupPreTest(CRAMask, CRBMask, CRAValue, CRBValue) \
 {                                                          \
     SetXER(0);                                             \
