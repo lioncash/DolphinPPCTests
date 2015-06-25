@@ -103,6 +103,7 @@ int main()
     {
         PPCIntegerTests();
         PPCFloatingPointTests();
+        PPCConditionRegisterTests();
         fclose(f);
     }
 
