@@ -258,11 +258,6 @@ void PPCIntegerTests()
         OPTEST_2_COMPONENTS("CNTLZW.", (1U << i));
     }
 
-    //
-    // TODO: Add tests for condition register instructions
-    //       such as cror, crand, etc.
-    //
-
     printf("\nDIVW Variants\n");
     OPTEST_3_COMPONENTS("DIVW", 0, 1);
     OPTEST_3_COMPONENTS("DIVW", 1, 1);
