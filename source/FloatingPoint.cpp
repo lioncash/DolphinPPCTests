@@ -1,6 +1,7 @@
 #include <cfloat>
 #include <cmath>
 #include <cstdio>
+#include <cstring>
 #include <limits>
 #include <type_traits>
 
@@ -18,16 +19,14 @@ static void ClearFPSCR()
 }
 static u32 GetFPSCR()
 {
-    union {
-        double f;
-        unsigned int u[2];
-    } cvt;
+    double d = 0.0;
+    asm volatile ("mffs %[out]" : [out]"=f"(d));
 
-    cvt.f = 0.0;
-    asm volatile ("mffs %[out]" : [out]"=f"(cvt.f));
+    u64 i = 0;
+    std::memcpy(&i, &d, sizeof(u64));
 
     // Lower 32 bits are undefined according to the PPC reference.
-    return cvt.u[1];
+    return static_cast<u32>(i >> 32);
 }
 
 // Test for a 2-component instruction
