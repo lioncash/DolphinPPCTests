@@ -10,11 +10,8 @@ static void* xfb = nullptr;
 static GXRModeObj* rmode = nullptr;
 static FILE* f = nullptr;
 
-static ssize_t file_write(_reent* r, int fd, const char* ptr, size_t len)
+static ssize_t file_write(_reent*, int, const char* ptr, size_t len)
 {
-    (void)r;
-    (void)fd;
-
     if (len > 1)
         fprintf(f, "%.*s", len, ptr);
 
