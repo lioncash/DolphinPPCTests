@@ -23,7 +23,7 @@
 
 // Note: This'll generate wrong values on little-endian PPC.
 //       So, uhh... don't use this on little-endian.
-static inline uint32_t GetShiftValue(uint32_t mask)
+static uint32_t GetShiftValue(uint32_t mask)
 {
     switch (mask)
     {
