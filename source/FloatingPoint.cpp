@@ -17,23 +17,23 @@ static void ClearFPSCR()
 {
     asm volatile ("mtfsf 0xFF, %[reg]" : : [reg]"f"(0.0));
 }
-static u32 GetFPSCR()
+static uint32_t GetFPSCR()
 {
     double d = 0.0;
     asm volatile ("mffs %[out]" : [out]"=f"(d));
 
-    u64 i = 0;
-    std::memcpy(&i, &d, sizeof(u64));
+    uint64_t i = 0;
+    std::memcpy(&i, &d, sizeof(uint64_t));
 
     // Lower 32 bits are undefined according to the PPC reference.
-    return static_cast<u32>(i >> 32);
+    return static_cast<uint32_t>(i >> 32);
 }
 
 // Test for a 2-component instruction
 // e.g. FABS frD, frB
 #define OPTEST_2_COMPONENTS(inst, frA)                                         \
 {                                                                              \
-    u64 output;                                                                \
+    uint64_t output;                                                           \
                                                                                \
     ClearFPSCR();                                                              \
     SetCR(0);                                                                  \
@@ -46,7 +46,7 @@ static u32 GetFPSCR()
 // Test for a 2-component instruction which tests all rounding modes.
 #define OPTEST_2_COMPONENTS_WITH_ROUND(inst, frA)                               \
 {                                                                               \
-    u64 output;                                                                 \
+    uint64_t output;                                                            \
                                                                                 \
                                                                                 \
     for (int i = 0; i <= 3; i++)                                                \
@@ -76,7 +76,7 @@ static u32 GetFPSCR()
 // e.g. FADDS frD, frA, frB
 #define OPTEST_3_COMPONENTS_WITH_ROUND(inst, frA, frB)                                   \
 {                                                                                        \
-    u64 output;                                                                          \
+    uint64_t output;                                                                     \
                                                                                          \
     for (int i = 0; i <= 3; i++)                                                         \
     {                                                                                    \
@@ -115,7 +115,7 @@ static u32 GetFPSCR()
 // Test for a 4-component instruction.
 #define OPTEST_4_COMPONENTS(inst, frA, frC, frB)                                              \
 {                                                                                             \
-    u64 output;                                                                               \
+    uint64_t output;                                                                          \
                                                                                               \
     asm volatile (inst " %[out], %[Fra], %[Frc], %[Frb]"                                      \
         : [out]"=&f"(output)                                                                  \
@@ -129,7 +129,7 @@ static u32 GetFPSCR()
 // e.g. FMADD frD, frA, frC, frB
 #define OPTEST_4_COMPONENTS_WITH_ROUND(inst, frA, frC, frB)                                       \
 {                                                                                                 \
-    u64 output;                                                                                   \
+    uint64_t output;                                                                              \
                                                                                                   \
     for (int i = 0; i <= 3; i++)                                                                  \
     {                                                                                             \

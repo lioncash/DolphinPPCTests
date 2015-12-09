@@ -7,7 +7,7 @@
 // e.g. ADDME rD, rA
 #define OPTEST_2_COMPONENTS(inst, rA)                                        \
 {                                                                            \
-    u32 output;                                                              \
+    uint32_t output;                                                         \
                                                                              \
     SetXER(0);                                                               \
     SetCR(0);                                                                \
@@ -21,7 +21,7 @@
 // e.g. ADD rD, rA, rB
 #define OPTEST_3_COMPONENTS(inst, rA, rB)                                                       \
 {                                                                                               \
-    u32 output;                                                                                 \
+    uint32_t output;                                                                            \
                                                                                                 \
     SetCR(0);                                                                                   \
     SetXER(0);                                                                                  \
@@ -34,7 +34,7 @@
 // Test for a 3-component instruction, where the third component is an immediate.
 #define OPTEST_3_COMPONENTS_IMM(inst, rA, imm)                                                     \
 {                                                                                                  \
-    u32 output;                                                                                    \
+    uint32_t output;                                                                               \
                                                                                                    \
     SetCR(0);                                                                                      \
     SetXER(0);                                                                                     \
@@ -71,7 +71,7 @@
 // e.g. RLWIMI rA, rS, SH, MB, ME
 #define OPTEST_5_COMPONENTS(inst, rA, rS, SH, MB, ME)                                                          \
 {                                                                                                              \
-    u32 output = rA;                                                                                           \
+    uint32_t output = rA;                                                                                      \
                                                                                                                \
     SetCR(0);                                                                                                  \
     SetXER(0);                                                                                                 \
@@ -249,11 +249,11 @@ void PPCIntegerTests()
     OPTEST_3_COMPONENTS_CMP_IMM("CMPLI", 0x2FFF, 0x1FFF);
 
     printf("\nCNTLZW Variants\n");
-    for (u32 i = 0; i < 32; i++)
+    for (uint32_t i = 0; i < 32; i++)
     {
         OPTEST_2_COMPONENTS("CNTLZW", (1U << i));
     }
-    for (u32 i = 0; i < 32; i++)
+    for (uint32_t i = 0; i < 32; i++)
     {
         OPTEST_2_COMPONENTS("CNTLZW.", (1U << i));
     }
