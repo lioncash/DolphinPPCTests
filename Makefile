@@ -18,7 +18,7 @@ include $(DEVKITPPC)/wii_rules
 TARGET		:=	boot
 BUILD		:=	build
 SOURCES		:=	source
-DATA		:=	data  
+DATA		:=	data
 INCLUDES	:=
 
 #---------------------------------------------------------------------------------
@@ -26,7 +26,7 @@ INCLUDES	:=
 #---------------------------------------------------------------------------------
 
 CFLAGS   = -g -O2 -Wall -Wextra $(MACHDEP) $(INCLUDE)
-CXXFLAGS = $(CFLAGS) -std=gnu++11
+CXXFLAGS = $(CFLAGS) -std=gnu++1y
 
 LDFLAGS  = -g $(MACHDEP) -Wl,-Map,$(notdir $@).map
 
