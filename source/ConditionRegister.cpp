@@ -1,3 +1,4 @@
+#include <cinttypes>
 #include <cstdio>
 
 #include "Tests.h"
@@ -61,31 +62,31 @@ static uint32_t GetShiftValue(uint32_t mask)
 // Tests a 3 component instruction
 // e.g. CROR crD, crA, crB
 // Destination is always CR0
-#define OPTEST_3_COMPONENTS(inst, CRAMask, CRBMask, CRAField, CRBField)                      \
-{                                                                                            \
-    printf("%s\n", inst);                                                                    \
-                                                                                             \
-    for (int i = 0; i <= CR_FIELD_MAX_VALUE; i++)                                            \
-    {                                                                                        \
-        for (int j = 0; j <= CR_FIELD_MAX_VALUE; j++)                                        \
-        {                                                                                    \
-            SetupPreTest(CRAMask, CRBMask, i, j);                                            \
-            asm volatile (inst " cr0, 4*cr" #CRAField "+0, 4*cr" #CRBField "+0" ::: "cr0");  \
-            printf("     Bit 0 ::  crA 0x%08X | crB 0x%08X | CR: 0x%08X\n", i, j, GetCR());  \
-                                                                                             \
-            SetupPreTest(CRAMask, CRBMask, i, j);                                            \
-            asm volatile (inst " cr0, 4*cr" #CRAField "+1, 4*cr" #CRBField "+1" ::: "cr0");  \
-            printf("     Bit 1 ::  crA 0x%08X | crB 0x%08X | CR: 0x%08X\n", i, j, GetCR());  \
-                                                                                             \
-            SetupPreTest(CRAMask, CRBMask, i, j);                                            \
-            asm volatile (inst " cr0, 4*cr" #CRAField "+2, 4*cr" #CRBField "+2" ::: "cr0");  \
-            printf("     Bit 2 ::  crA 0x%08X | crB 0x%08X | CR: 0x%08X\n", i, j, GetCR());  \
-                                                                                             \
-            SetupPreTest(CRAMask, CRBMask, i, j);                                            \
-            asm volatile (inst " cr0, 4*cr" #CRAField "+3, 4*cr" #CRBField "+3" ::: "cr0");  \
-            printf("     Bit 3 ::  crA 0x%08X | crB 0x%08X | CR: 0x%08X\n", i, j, GetCR());  \
-        }                                                                                    \
-    }                                                                                        \
+#define OPTEST_3_COMPONENTS(inst, CRAMask, CRBMask, CRAField, CRBField)                                                 \
+{                                                                                                                       \
+    printf("%s\n", inst);                                                                                               \
+                                                                                                                        \
+    for (uint32_t i = 0; i <= CR_FIELD_MAX_VALUE; i++)                                                                  \
+    {                                                                                                                   \
+        for (uint32_t j = 0; j <= CR_FIELD_MAX_VALUE; j++)                                                              \
+        {                                                                                                               \
+            SetupPreTest(CRAMask, CRBMask, i, j);                                                                       \
+            asm volatile (inst " cr0, 4*cr" #CRAField "+0, 4*cr" #CRBField "+0" ::: "cr0");                             \
+            printf("     Bit 0 ::  crA 0x%08" PRIX32 " | crB 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n", i, j, GetCR());  \
+                                                                                                                        \
+            SetupPreTest(CRAMask, CRBMask, i, j);                                                                       \
+            asm volatile (inst " cr0, 4*cr" #CRAField "+1, 4*cr" #CRBField "+1" ::: "cr0");                             \
+            printf("     Bit 1 ::  crA 0x%08" PRIX32 " | crB 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n", i, j, GetCR());  \
+                                                                                                                        \
+            SetupPreTest(CRAMask, CRBMask, i, j);                                                                       \
+            asm volatile (inst " cr0, 4*cr" #CRAField "+2, 4*cr" #CRBField "+2" ::: "cr0");                             \
+            printf("     Bit 2 ::  crA 0x%08" PRIX32 " | crB 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n", i, j, GetCR());  \
+                                                                                                                        \
+            SetupPreTest(CRAMask, CRBMask, i, j);                                                                       \
+            asm volatile (inst " cr0, 4*cr" #CRAField "+3, 4*cr" #CRBField "+3" ::: "cr0");                             \
+            printf("     Bit 3 ::  crA 0x%08" PRIX32 " | crB 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n", i, j, GetCR());  \
+        }                                                                                                               \
+    }                                                                                                                   \
 }
 
 void PPCConditionRegisterTests()
