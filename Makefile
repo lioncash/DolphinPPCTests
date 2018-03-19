@@ -26,7 +26,7 @@ INCLUDES	:=
 #---------------------------------------------------------------------------------
 
 CFLAGS   = -g -O2 -Wall -Wextra $(MACHDEP) $(INCLUDE)
-CXXFLAGS = $(CFLAGS) -std=gnu++1y
+CXXFLAGS = $(CFLAGS) -std=gnu++1z -D_GNU_SOURCE
 
 LDFLAGS  = -g $(MACHDEP) -Wl,-Map,$(notdir $@).map
 

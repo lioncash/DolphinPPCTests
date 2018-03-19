@@ -10,7 +10,7 @@ static void* xfb = nullptr;
 static GXRModeObj* rmode = nullptr;
 static FILE* f = nullptr;
 
-static ssize_t file_write(_reent*, int, const char* ptr, size_t len)
+static ssize_t file_write(_reent*, void*, const char* ptr, size_t len)
 {
     if (len > 1)
         fprintf(f, "%.*s", len, ptr);
@@ -34,6 +34,7 @@ static const devoptab_t dotab_file = {
     nullptr,
     nullptr,
     0,
+    nullptr,
     nullptr,
     nullptr,
     nullptr,
