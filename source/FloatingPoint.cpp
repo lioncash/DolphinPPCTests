@@ -1,4 +1,5 @@
 #include <cfloat>
+#include <cinttypes>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -31,127 +32,127 @@ static uint32_t GetFPSCR()
 
 // Test for a 2-component instruction
 // e.g. FABS frD, frB
-#define OPTEST_2_COMPONENTS(inst, frA)                                         \
-{                                                                              \
-    uint64_t output;                                                           \
-                                                                               \
-    ClearFPSCR();                                                              \
-    SetCR(0);                                                                  \
-    asm volatile (inst " %[out], %[Fra]": [out]"=&f"(output) : [Fra]"f"(frA)); \
-                                                                               \
-    printf("%-8s :: frD 0x%016llX | frA %e | FPSCR: 0x%08X | CR: 0x%08X\n",    \
-           inst, output, frA, GetFPSCR(), GetCR());                            \
+#define OPTEST_2_COMPONENTS(inst, frA)                                                                  \
+{                                                                                                       \
+    uint64_t output;                                                                                    \
+                                                                                                        \
+    ClearFPSCR();                                                                                       \
+    SetCR(0);                                                                                           \
+    asm volatile (inst " %[out], %[Fra]": [out]"=&f"(output) : [Fra]"f"(frA));                          \
+                                                                                                        \
+    printf("%-8s :: frD 0x%016" PRIX64 " | frA %e | FPSCR: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n",    \
+           inst, output, frA, GetFPSCR(), GetCR());                                                     \
 }
 
 // Test for a 2-component instruction which tests all rounding modes.
-#define OPTEST_2_COMPONENTS_WITH_ROUND(inst, frA)                               \
-{                                                                               \
-    uint64_t output;                                                            \
-                                                                                \
-                                                                                \
-    for (int i = 0; i <= 3; i++)                                                \
-    {                                                                           \
-        ClearFPSCR();                                                           \
-        SetCR(0);                                                               \
-                                                                                \
-        if (i == 0)                                                             \
-            asm volatile ("mtfsb0 30\nmtfsb0 31\n");                            \
-        else if (i == 1)                                                        \
-            asm volatile ("mtfsb0 30\nmtfsb1 31\n");                            \
-        else if (i == 2)                                                        \
-            asm volatile ("mtfsb1 30\nmtfsb0 31\n");                            \
-        else if (i == 3)                                                        \
-            asm volatile ("mtfsb1 30\nmtfsb1 31\n");                            \
-                                                                                \
-        asm volatile (inst " %[out], %[Fra]"                                    \
-            : [out]"=&f"(output)                                                \
-            : [Fra]"f"(frA));                                                   \
-                                                                                \
-        printf("%-8s :: frD 0x%016llX | frA %e | FPSCR: 0x%08X | CR: 0x%08X\n", \
-               inst, output, frA, GetFPSCR(), GetCR());                         \
-    }                                                                           \
+#define OPTEST_2_COMPONENTS_WITH_ROUND(inst, frA)                                                        \
+{                                                                                                        \
+    uint64_t output;                                                                                     \
+                                                                                                         \
+                                                                                                         \
+    for (int i = 0; i <= 3; i++)                                                                         \
+    {                                                                                                    \
+        ClearFPSCR();                                                                                    \
+        SetCR(0);                                                                                        \
+                                                                                                         \
+        if (i == 0)                                                                                      \
+            asm volatile ("mtfsb0 30\nmtfsb0 31\n");                                                     \
+        else if (i == 1)                                                                                 \
+            asm volatile ("mtfsb0 30\nmtfsb1 31\n");                                                     \
+        else if (i == 2)                                                                                 \
+            asm volatile ("mtfsb1 30\nmtfsb0 31\n");                                                     \
+        else if (i == 3)                                                                                 \
+            asm volatile ("mtfsb1 30\nmtfsb1 31\n");                                                     \
+                                                                                                         \
+        asm volatile (inst " %[out], %[Fra]"                                                             \
+            : [out]"=&f"(output)                                                                         \
+            : [Fra]"f"(frA));                                                                            \
+                                                                                                         \
+        printf("%-8s :: frD 0x%016" PRIX64 " | frA %e | FPSCR: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n", \
+               inst, output, frA, GetFPSCR(), GetCR());                                                  \
+    }                                                                                                    \
 }
 
 // Test for a 3-component instruction with all rounding modes.
 // e.g. FADDS frD, frA, frB
-#define OPTEST_3_COMPONENTS_WITH_ROUND(inst, frA, frB)                                   \
-{                                                                                        \
-    uint64_t output;                                                                     \
-                                                                                         \
-    for (int i = 0; i <= 3; i++)                                                         \
-    {                                                                                    \
-        ClearFPSCR();                                                                    \
-        SetCR(0);                                                                        \
-                                                                                         \
-        if (i == 0)                                                                      \
-            asm volatile ("mtfsb0 30\nmtfsb0 31\n");                                     \
-        else if (i == 1)                                                                 \
-            asm volatile ("mtfsb0 30\nmtfsb1 31\n");                                     \
-        else if (i == 2)                                                                 \
-            asm volatile ("mtfsb1 30\nmtfsb0 31\n");                                     \
-        else if (i == 3)                                                                 \
-            asm volatile ("mtfsb1 30\nmtfsb1 31\n");                                     \
-                                                                                         \
-        asm volatile (inst " %[out], %[Fra], %[Frb]"                                     \
-            : [out]"=&f"(output)                                                         \
-            : [Fra]"f"(frA), [Frb]"f"(frB));                                             \
-                                                                                         \
-        printf("%-8s :: frD 0x%016llX | frA %e | frB %e | FPSCR: 0x%08X | CR: 0x%08X\n", \
-               inst, output, frA, frB, GetFPSCR(), GetCR());                             \
-    }                                                                                    \
+#define OPTEST_3_COMPONENTS_WITH_ROUND(inst, frA, frB)                                                            \
+{                                                                                                                 \
+    uint64_t output;                                                                                              \
+                                                                                                                  \
+    for (int i = 0; i <= 3; i++)                                                                                  \
+    {                                                                                                             \
+        ClearFPSCR();                                                                                             \
+        SetCR(0);                                                                                                 \
+                                                                                                                  \
+        if (i == 0)                                                                                               \
+            asm volatile ("mtfsb0 30\nmtfsb0 31\n");                                                              \
+        else if (i == 1)                                                                                          \
+            asm volatile ("mtfsb0 30\nmtfsb1 31\n");                                                              \
+        else if (i == 2)                                                                                          \
+            asm volatile ("mtfsb1 30\nmtfsb0 31\n");                                                              \
+        else if (i == 3)                                                                                          \
+            asm volatile ("mtfsb1 30\nmtfsb1 31\n");                                                              \
+                                                                                                                  \
+        asm volatile (inst " %[out], %[Fra], %[Frb]"                                                              \
+            : [out]"=&f"(output)                                                                                  \
+            : [Fra]"f"(frA), [Frb]"f"(frB));                                                                      \
+                                                                                                                  \
+        printf("%-8s :: frD 0x%016" PRIX64 " | frA %e | frB %e | FPSCR: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n", \
+               inst, output, frA, frB, GetFPSCR(), GetCR());                                                      \
+    }                                                                                                             \
 }
 
 // Used for testing CMP instructions.
-#define OPTEST_3_COMPONENTS_CMP(inst, frA, frB)                                 \
-{                                                                               \
-    ClearFPSCR();                                                               \
-    SetCR(0);                                                                   \
-    asm volatile (inst " cr1, %[Fra], %[Frb]": : [Fra]"f"(frA), [Frb]"f"(frB)); \
-                                                                                \
-    printf("%-8s :: frA %e | frB %e | FPSCR: 0x%08X | CR: 0x%08X\n",            \
-           inst, frA, frB, GetFPSCR(), GetCR());                                \
+#define OPTEST_3_COMPONENTS_CMP(inst, frA, frB)                                                   \
+{                                                                                                 \
+    ClearFPSCR();                                                                                 \
+    SetCR(0);                                                                                     \
+    asm volatile (inst " cr1, %[Fra], %[Frb]": : [Fra]"f"(frA), [Frb]"f"(frB));                   \
+                                                                                                  \
+    printf("%-8s :: frA %e | frB %e | FPSCR: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n",            \
+           inst, frA, frB, GetFPSCR(), GetCR());                                                  \
 }
 
 // Test for a 4-component instruction.
-#define OPTEST_4_COMPONENTS(inst, frA, frC, frB)                                              \
-{                                                                                             \
-    uint64_t output;                                                                          \
-                                                                                              \
-    asm volatile (inst " %[out], %[Fra], %[Frc], %[Frb]"                                      \
-        : [out]"=&f"(output)                                                                  \
-        : [Fra]"f"(frA), [Frc]"f"(frC), [Frb]"f"(frB));                                       \
-                                                                                              \
-    printf("%-8s :: frD 0x%016llX | frA %e | frC %e | frB %e | FPSCR: 0x%08X | CR: 0x%08X\n", \
-           inst, output, frA, frC, frB, GetFPSCR(), GetCR());                                 \
+#define OPTEST_4_COMPONENTS(inst, frA, frC, frB)                                                                       \
+{                                                                                                                      \
+    uint64_t output;                                                                                                   \
+                                                                                                                       \
+    asm volatile (inst " %[out], %[Fra], %[Frc], %[Frb]"                                                               \
+        : [out]"=&f"(output)                                                                                           \
+        : [Fra]"f"(frA), [Frc]"f"(frC), [Frb]"f"(frB));                                                                \
+                                                                                                                       \
+    printf("%-8s :: frD 0x%016" PRIX64 " | frA %e | frC %e | frB %e | FPSCR: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n", \
+           inst, output, frA, frC, frB, GetFPSCR(), GetCR());                                                          \
 }
 
 // Test for a 4-component instruction with all rounding modes.
 // e.g. FMADD frD, frA, frC, frB
-#define OPTEST_4_COMPONENTS_WITH_ROUND(inst, frA, frC, frB)                                       \
-{                                                                                                 \
-    uint64_t output;                                                                              \
-                                                                                                  \
-    for (int i = 0; i <= 3; i++)                                                                  \
-    {                                                                                             \
-        ClearFPSCR();                                                                             \
-        SetCR(0);                                                                                 \
-                                                                                                  \
-        if (i == 0)                                                                               \
-            asm volatile ("mtfsb0 30\nmtfsb0 31\n");                                              \
-        else if (i == 1)                                                                          \
-            asm volatile ("mtfsb0 30\nmtfsb1 31\n");                                              \
-        else if (i == 2)                                                                          \
-            asm volatile ("mtfsb1 30\nmtfsb0 31\n");                                              \
-        else if (i == 3)                                                                          \
-            asm volatile ("mtfsb1 30\nmtfsb1 31\n");                                              \
-                                                                                                  \
-        asm volatile (inst " %[out], %[Fra], %[Frc], %[Frb]"                                      \
-            : [out]"=&f"(output)                                                                  \
-            : [Fra]"f"(frA), [Frc]"f"(frC), [Frb]"f"(frB));                                       \
-                                                                                                  \
-        printf("%-8s :: frD 0x%016llX | frA %e | frC %e | frB %e | FPSCR: 0x%08X | CR: 0x%08X\n", \
-               inst, output, frA, frC, frB, GetFPSCR(), GetCR());                                 \
-    }                                                                                             \
+#define OPTEST_4_COMPONENTS_WITH_ROUND(inst, frA, frC, frB)                                                                \
+{                                                                                                                          \
+    uint64_t output;                                                                                                       \
+                                                                                                                           \
+    for (int i = 0; i <= 3; i++)                                                                                           \
+    {                                                                                                                      \
+        ClearFPSCR();                                                                                                      \
+        SetCR(0);                                                                                                          \
+                                                                                                                           \
+        if (i == 0)                                                                                                        \
+            asm volatile ("mtfsb0 30\nmtfsb0 31\n");                                                                       \
+        else if (i == 1)                                                                                                   \
+            asm volatile ("mtfsb0 30\nmtfsb1 31\n");                                                                       \
+        else if (i == 2)                                                                                                   \
+            asm volatile ("mtfsb1 30\nmtfsb0 31\n");                                                                       \
+        else if (i == 3)                                                                                                   \
+            asm volatile ("mtfsb1 30\nmtfsb1 31\n");                                                                       \
+                                                                                                                           \
+        asm volatile (inst " %[out], %[Fra], %[Frc], %[Frb]"                                                               \
+            : [out]"=&f"(output)                                                                                           \
+            : [Fra]"f"(frA), [Frc]"f"(frC), [Frb]"f"(frB));                                                                \
+                                                                                                                           \
+        printf("%-8s :: frD 0x%016" PRIX64 " | frA %e | frC %e | frB %e | FPSCR: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n", \
+               inst, output, frA, frC, frB, GetFPSCR(), GetCR());                                                          \
+    }                                                                                                                      \
 }
 
 // Tests if floating point comparison functions (FCMPO/FCMPU) preserve the class bit when setting the FPCC bits.
@@ -166,12 +167,12 @@ static void FPRFClassBitTest()
     ClearFPSCR();
     asm volatile ("MTFSB1 15\n"
                   "FCMPO cr1, %[frA], %[frB]" :: [frA]"f"(qnan_1), [frB]"f"(qnan_2));
-    printf("FCMPO :: frA %e | frB %e | FPSCR: 0x%08X | CR: 0x%08X\n", qnan_1, qnan_2, GetFPSCR(), GetCR());
+    printf("FCMPO :: frA %e | frB %e | FPSCR: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n", qnan_1, qnan_2, GetFPSCR(), GetCR());
 
     ClearFPSCR();
     asm volatile ("MTFSB1 15\n"
                   "FCMPU cr1, %[frA], %[frB]" :: [frA]"f"(qnan_1), [frB]"f"(qnan_2));
-    printf("FCMPU :: frA %e | frB %e | FPSCR: 0x%08X | CR: 0x%08X\n", qnan_1, qnan_2, GetFPSCR(), GetCR());
+    printf("FCMPU :: frA %e | frB %e | FPSCR: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n", qnan_1, qnan_2, GetFPSCR(), GetCR());
 }
 
 void PPCFloatingPointTests()
