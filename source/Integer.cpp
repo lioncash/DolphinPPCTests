@@ -1,3 +1,4 @@
+#include <cinttypes>
 #include <cstdint>
 #include <cstdio>
 
@@ -5,82 +6,86 @@
 
 // Test for a 2-component instruction
 // e.g. ADDME rD, rA
-#define OPTEST_2_COMPONENTS(inst, rA)                                        \
-{                                                                            \
-    uint32_t output;                                                         \
-                                                                             \
-    SetXER(0);                                                               \
-    SetCR(0);                                                                \
-    asm volatile (inst " %[out], %[Ra]": [out]"=&r"(output) : [Ra]"r"(rA));  \
-                                                                             \
-    printf("%-8s :: rD 0x%08X | rA 0x%08X | XER: 0x%08X | CR: 0x%08X\n",     \
-           inst, output, rA, GetXER(), GetCR());                             \
+#define OPTEST_2_COMPONENTS(inst, rA)                                                                            \
+{                                                                                                                \
+    uint32_t output;                                                                                             \
+                                                                                                                 \
+    SetXER(0);                                                                                                   \
+    SetCR(0);                                                                                                    \
+    asm volatile (inst " %[out], %[Ra]": [out]"=&r"(output) : [Ra]"r"(rA));                                      \
+                                                                                                                 \
+    printf("%-8s :: rD 0x%08" PRIX32 " | rA 0x%08" PRIX32 " | XER: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n",     \
+           inst, output, static_cast<uint32_t>(rA), GetXER(), GetCR());                                          \
 }
 
 // Test for a 3-component instruction
 // e.g. ADD rD, rA, rB
-#define OPTEST_3_COMPONENTS(inst, rA, rB)                                                       \
-{                                                                                               \
-    uint32_t output;                                                                            \
-                                                                                                \
-    SetCR(0);                                                                                   \
-    SetXER(0);                                                                                  \
-    asm volatile (inst " %[out], %[Ra], %[Rb]": [out]"=&r"(output) : [Ra]"r"(rA), [Rb]"r"(rB)); \
-                                                                                                \
-    printf("%-8s :: rD 0x%08X | rA 0x%08X | rB 0x%08X | XER: 0x%08X | CR: 0x%08X\n",            \
-           inst, output, rA, rB, GetXER(), GetCR());                                            \
+#define OPTEST_3_COMPONENTS(inst, rA, rB)                                                                                                    \
+{                                                                                                                                            \
+    uint32_t output;                                                                                                                         \
+                                                                                                                                             \
+    SetCR(0);                                                                                                                                \
+    SetXER(0);                                                                                                                               \
+    asm volatile (inst " %[out], %[Ra], %[Rb]": [out]"=&r"(output) : [Ra]"r"(rA), [Rb]"r"(rB));                                              \
+                                                                                                                                             \
+    printf("%-8s :: rD 0x%08" PRIX32 " | rA 0x%08" PRIX32 " | rB 0x%08" PRIX32 " | XER: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n",            \
+           inst, output, static_cast<uint32_t>(rA), static_cast<uint32_t>(rB), GetXER(), GetCR());                                           \
 }
 
 // Test for a 3-component instruction, where the third component is an immediate.
-#define OPTEST_3_COMPONENTS_IMM(inst, rA, imm)                                                     \
-{                                                                                                  \
-    uint32_t output;                                                                               \
-                                                                                                   \
-    SetCR(0);                                                                                      \
-    SetXER(0);                                                                                     \
-    asm volatile (inst " %[out], %[Ra], %[Imm]": [out]"=&r"(output) : [Ra]"r"(rA), [Imm]"i"(imm)); \
-                                                                                                   \
-    printf("%-8s :: rD 0x%08X | rA 0x%08X | imm 0x%08X | XER: 0x%08X | CR: 0x%08X\n",              \
-           inst, output, rA, imm, GetXER(), GetCR());                                              \
+#define OPTEST_3_COMPONENTS_IMM(inst, rA, imm)                                                                                               \
+{                                                                                                                                            \
+    uint32_t output;                                                                                                                         \
+                                                                                                                                             \
+    SetCR(0);                                                                                                                                \
+    SetXER(0);                                                                                                                               \
+    asm volatile (inst " %[out], %[Ra], %[Imm]": [out]"=&r"(output) : [Ra]"r"(rA), [Imm]"i"(imm));                                           \
+                                                                                                                                             \
+    printf("%-8s :: rD 0x%08" PRIX32 " | rA 0x%08" PRIX32 " | imm 0x%08" PRIX32 " | XER: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n",           \
+           inst, output, static_cast<uint32_t>(rA), static_cast<uint32_t>(imm), GetXER(), GetCR());                                          \
 }
 
 // Used for testing the CMP instructions.
 // Stores result to cr0.
-#define OPTEST_3_COMPONENTS_CMP(inst, rA, rB)                             \
-{                                                                         \
-    SetCR(0);                                                             \
-    SetXER(0);                                                            \
-    asm volatile (inst " cr0, %[Ra], %[Rb]": : [Ra]"r"(rA), [Rb]"r"(rB)); \
-                                                                          \
-    printf("%-8s :: rA 0x%08X | rB 0x%08X | XER: 0x%08X | CR: 0x%08X\n",  \
-           inst, rA, rB, GetXER(), GetCR());                              \
+#define OPTEST_3_COMPONENTS_CMP(inst, rA, rB)                                                                 \
+{                                                                                                             \
+    SetCR(0);                                                                                                 \
+    SetXER(0);                                                                                                \
+    asm volatile (inst " cr0, %[Ra], %[Rb]": : [Ra]"r"(rA), [Rb]"r"(rB));                                     \
+                                                                                                              \
+    printf("%-8s :: rA 0x%08" PRIX32 " | rB 0x%08" PRIX32 " | XER: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n",  \
+           inst, static_cast<uint32_t>(rA), static_cast<uint32_t>(rB), GetXER(), GetCR());                    \
 }
 
 // Used for testing the immediate variants of CMP.
-#define OPTEST_3_COMPONENTS_CMP_IMM(inst, rA, imm)                           \
-{                                                                            \
-    SetCR(0);                                                                \
-    SetXER(0);                                                               \
-    asm volatile (inst " cr0, %[Ra], %[Imm]": : [Ra]"r"(rA), [Imm]"i"(imm)); \
-                                                                             \
-    printf("%-8s :: rA 0x%08X | imm 0x%08X | XER: 0x%08X | CR: 0x%08X\n",    \
-           inst, rA, imm, GetXER(), GetCR());                                \
+#define OPTEST_3_COMPONENTS_CMP_IMM(inst, rA, imm)                                                               \
+{                                                                                                                \
+    SetCR(0);                                                                                                    \
+    SetXER(0);                                                                                                   \
+    asm volatile (inst " cr0, %[Ra], %[Imm]": : [Ra]"r"(rA), [Imm]"i"(imm));                                     \
+                                                                                                                 \
+    printf("%-8s :: rA 0x%08" PRIX32 " | imm 0x%08" PRIX32 " | XER: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n",    \
+           inst, static_cast<uint32_t>(rA), static_cast<uint32_t>(imm), GetXER(), GetCR());                      \
 }
 
 // Test for a 5-component instruction (sets the rD before the operation).
 // e.g. RLWIMI rA, rS, SH, MB, ME
-#define OPTEST_5_COMPONENTS(inst, rA, rS, SH, MB, ME)                                                          \
-{                                                                                                              \
-    uint32_t output = rA;                                                                                      \
-                                                                                                               \
-    SetCR(0);                                                                                                  \
-    SetXER(0);                                                                                                 \
-    asm volatile (inst " %[out], %[Rs], %[Sh], %[Mb], %[Me]"                                                   \
-        : [out]"+&r"(output)                                                                                   \
-        : [Rs]"r"(rS), [Sh]"r"(SH), [Mb]"r"(MB), [Me]"r"(ME));                                                 \
-                                                                                                               \
-    printf("%-8s :: rD 0x%08X | rS 0x%08X | SH 0x%08X | MB: 0x%08X | ME: 0x%08X | XER: 0x%08X | CR: 0x%08X\n", \
-           inst, output, rS, SH, MB, ME, GetXER(), GetCR());                                                   \
+#define OPTEST_5_COMPONENTS(inst, rA, rS, SH, MB, ME)                                                                                                                         \
+{                                                                                                                                                                             \
+    uint32_t output = rA;                                                                                                                                                     \
+                                                                                                                                                                              \
+    SetCR(0);                                                                                                                                                                 \
+    SetXER(0);                                                                                                                                                                \
+    asm volatile (inst " %[out], %[Rs], %[Sh], %[Mb], %[Me]"                                                                                                                  \
+        : [out]"+&r"(output)                                                                                                                                                  \
+        : [Rs]"r"(rS), [Sh]"r"(SH), [Mb]"r"(MB), [Me]"r"(ME));                                                                                                                \
+                                                                                                                                                                              \
+    printf("%-8s :: rD 0x%08" PRIX32 " | rS 0x%08" PRIX32 " | SH 0x%08" PRIX32 " | MB: 0x%08" PRIX32 " | ME: 0x%08" PRIX32 " | XER: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n", \
+           inst, output,                                                                                                                                                      \
+           static_cast<uint32_t>(rS),                                                                                                                                         \
+           static_cast<uint32_t>(SH),                                                                                                                                         \
+           static_cast<uint32_t>(MB),                                                                                                                                         \
+           static_cast<uint32_t>(ME), GetXER(), GetCR());                                                                                                                     \
 }
 
 void PPCIntegerTests()
@@ -531,7 +536,7 @@ void PPCIntegerTests()
 
     printf("\nRL[x] Variants\n");
 
-    for (int i = 0; i <= 31; i++)
+    for (uint32_t i = 0; i <= 31; i++)
     {
         OPTEST_5_COMPONENTS("RLWIMI", 0x7FFFFFFF, 30, i, 0, 10);
         OPTEST_5_COMPONENTS("RLWIMI", 0x80000000, 30, i, 0, 10);
@@ -543,7 +548,7 @@ void PPCIntegerTests()
         OPTEST_5_COMPONENTS("RLWIMI", 0x80000000, 30, i, 20, 30);
         OPTEST_5_COMPONENTS("RLWIMI", 0xFFFFFFFF, 30, i, 20, 30);
     }
-    for (int i = 0; i <= 31; i++)
+    for (uint32_t i = 0; i <= 31; i++)
     {
         OPTEST_5_COMPONENTS("RLWIMI.", 0x7FFFFFFF, 30, i, 0, 10);
         OPTEST_5_COMPONENTS("RLWIMI.", 0x80000000, 30, i, 0, 10);
@@ -555,7 +560,7 @@ void PPCIntegerTests()
         OPTEST_5_COMPONENTS("RLWIMI.", 0x80000000, 30, i, 20, 30);
         OPTEST_5_COMPONENTS("RLWIMI.", 0xFFFFFFFF, 30, i, 20, 30);
     }
-    for (int i = 0; i <= 31; i++)
+    for (uint32_t i = 0; i <= 31; i++)
     {
         OPTEST_5_COMPONENTS("RLWINM", 0x7FFFFFFF, 30, i, 0, 10);
         OPTEST_5_COMPONENTS("RLWINM", 0x80000000, 30, i, 0, 10);
@@ -567,7 +572,7 @@ void PPCIntegerTests()
         OPTEST_5_COMPONENTS("RLWINM", 0x80000000, 30, i, 20, 30);
         OPTEST_5_COMPONENTS("RLWINM", 0xFFFFFFFF, 30, i, 20, 30);
     }
-    for (int i = 0; i <= 31; i++)
+    for (uint32_t i = 0; i <= 31; i++)
     {
         OPTEST_5_COMPONENTS("RLWINM.", 0x7FFFFFFF, 30, i, 0, 10);
         OPTEST_5_COMPONENTS("RLWINM.", 0x80000000, 30, i, 0, 10);
@@ -582,56 +587,56 @@ void PPCIntegerTests()
 
     printf("\nShift Variants\n");
     // Shifts greater than 31 for 32-bit should produce zero.
-    for (int i = 0; i <= 64; i++)
+    for (uint32_t i = 0; i <= 64; i++)
     {
         OPTEST_3_COMPONENTS("SLW", i, i);
         OPTEST_3_COMPONENTS("SLW", 1, i);
         OPTEST_3_COMPONENTS("SLW", 0x7FFFFFFF, i);
         OPTEST_3_COMPONENTS("SLW", 0xFFFFFFFF, i);
     }
-    for (int i = 0; i <= 64; i++)
+    for (uint32_t i = 0; i <= 64; i++)
     {
         OPTEST_3_COMPONENTS("SLW.", i, i);
         OPTEST_3_COMPONENTS("SLW.", 1, i);
         OPTEST_3_COMPONENTS("SLW.", 0x7FFFFFFF, i);
         OPTEST_3_COMPONENTS("SLW.", 0xFFFFFFFF, i);
     }
-    for (int i = 0; i <= 64; i++)
+    for (uint32_t i = 0; i <= 64; i++)
     {
         OPTEST_3_COMPONENTS("SRAW", i, i);
         OPTEST_3_COMPONENTS("SRAW", 1, i);
         OPTEST_3_COMPONENTS("SRAW", 0x7FFFFFFF, i);
         OPTEST_3_COMPONENTS("SRAW", 0xFFFFFFFF, i);
     }
-    for (int i = 0; i <= 64; i++)
+    for (uint32_t i = 0; i <= 64; i++)
     {
         OPTEST_3_COMPONENTS("SRAW.", i, i);
         OPTEST_3_COMPONENTS("SRAW.", 1, i);
         OPTEST_3_COMPONENTS("SRAW.", 0x7FFFFFFF, i);
         OPTEST_3_COMPONENTS("SRAW.", 0xFFFFFFFF, i);
     }
-    for (int i = 0; i <= 64; i++)
+    for (uint32_t i = 0; i <= 64; i++)
     {
         OPTEST_3_COMPONENTS("SRAWI", i, i);
         OPTEST_3_COMPONENTS("SRAWI", 1, i);
         OPTEST_3_COMPONENTS("SRAWI", 0x7FFFFFFF, i);
         OPTEST_3_COMPONENTS("SRAWI", 0xFFFFFFFF, i);
     }
-    for (int i = 0; i <= 64; i++)
+    for (uint32_t i = 0; i <= 64; i++)
     {
         OPTEST_3_COMPONENTS("SRAWI.", i, i);
         OPTEST_3_COMPONENTS("SRAWI.", 1, i);
         OPTEST_3_COMPONENTS("SRAWI.", 0x7FFFFFFF, i);
         OPTEST_3_COMPONENTS("SRAWI.", 0xFFFFFFFF, i);
     }
-    for (int i = 0; i <= 64; i++)
+    for (uint32_t i = 0; i <= 64; i++)
     {
         OPTEST_3_COMPONENTS("SRW", i, i);
         OPTEST_3_COMPONENTS("SRW", 1, i);
         OPTEST_3_COMPONENTS("SRW", 0x7FFFFFFF, i);
         OPTEST_3_COMPONENTS("SRW", 0xFFFFFFFF, i);
     }
-    for (int i = 0; i <= 64; i++)
+    for (uint32_t i = 0; i <= 64; i++)
     {
         OPTEST_3_COMPONENTS("SRW.", i, i);
         OPTEST_3_COMPONENTS("SRW.", 1, i);
