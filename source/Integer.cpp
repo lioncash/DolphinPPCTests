@@ -88,112 +88,288 @@
            static_cast<uint32_t>(ME), GetXER(), GetCR());                                                                                                                     \
 }
 
+static void XEROverflowClearTest()
+{
+    printf("XER Overflow Clear Test (OV bit should not be set)\n");
+
+    uint32_t result = 0;
+    const uint32_t x = 2;
+    const uint32_t y = 2;
+
+    SetXER(0xFFFFFFFF);
+    asm volatile (
+        "addo 3, %[x], %[y]\n"
+        "mfxer %[result]"
+        : [result]"=r"(result)
+        : [x]"r"(x), [y]"r"(y));
+
+    printf("addo: Resulting XER: 0x%08" PRIX32 "\n", result);
+
+    SetXER(0xFFFFFFFF);
+    asm volatile (
+        "addco 3, %[x], %[y]\n"
+        "mfxer %[result]"
+        : [result]"=r"(result)
+        : [x]"r"(x), [y]"r"(y));
+
+    printf("addco: Resulting XER: 0x%08" PRIX32 "\n", result);
+
+    SetXER(0xFFFFFFFF);
+    asm volatile (
+        "addeo 3, %[x], %[y]\n"
+        "mfxer %[result]"
+        : [result]"=r"(result)
+        : [x]"r"(x), [y]"r"(y));
+
+    printf("addeo: Resulting XER: 0x%08" PRIX32 "\n", result);
+
+    SetXER(0xFFFFFFFF);
+    asm volatile (
+        "addmeo 3, %[x]\n"
+        "mfxer %[result]"
+        : [result]"=r"(result)
+        : [x]"r"(x));
+
+    printf("addmeo: Resulting XER: 0x%08" PRIX32 "\n", result);
+
+    SetXER(0xFFFFFFFF);
+    asm volatile (
+        "addzeo 3, %[x]\n"
+        "mfxer %[result]"
+        : [result]"=r"(result)
+        : [x]"r"(x));
+
+    printf("addzeo: Resulting XER: 0x%08" PRIX32 "\n", result);
+
+    SetXER(0xFFFFFFFF);
+    asm volatile (
+        "divwo 3, %[x], %[y]\n"
+        "mfxer %[result]"
+        : [result]"=r"(result)
+        : [x]"r"(x), [y]"r"(y));
+
+    printf("divwo: Resulting XER: 0x%08" PRIX32 "\n", result);
+
+    SetXER(0xFFFFFFFF);
+    asm volatile (
+        "divwuo 3, %[x], %[y]\n"
+        "mfxer %[result]"
+        : [result]"=r"(result)
+        : [x]"r"(x), [y]"r"(y));
+
+    printf("divwuo: Resulting XER: 0x%08" PRIX32 "\n", result);
+
+    SetXER(0xFFFFFFFF);
+    asm volatile (
+        "mullwo 3, %[x], %[y]\n"
+        "mfxer %[result]"
+        : [result]"=r"(result)
+        : [x]"r"(x), [y]"r"(y));
+
+    printf("mullwo: Resulting XER: 0x%08" PRIX32 "\n", result);
+
+    SetXER(0xFFFFFFFF);
+    asm volatile (
+        "subfo 3, %[x], %[y]\n"
+        "mfxer %[result]"
+        : [result]"=r"(result)
+        : [x]"r"(x), [y]"r"(y));
+
+    printf("subfo: Resulting XER: 0x%08" PRIX32 "\n", result);
+
+    SetXER(0xFFFFFFFF);
+    asm volatile (
+        "subfco 3, %[x], %[y]\n"
+        "mfxer %[result]"
+        : [result]"=r"(result)
+        : [x]"r"(x), [y]"r"(y));
+
+    printf("subfco: Resulting XER: 0x%08" PRIX32 "\n", result);
+
+    SetXER(0xFFFFFFFF);
+    asm volatile (
+        "subfeo 3, %[x], %[y]\n"
+        "mfxer %[result]"
+        : [result]"=r"(result)
+        : [x]"r"(x), [y]"r"(y));
+
+    printf("subfeo: Resulting XER: 0x%08" PRIX32 "\n", result);
+
+    SetXER(0xFFFFFFFF);
+    asm volatile (
+        "subfmeo 3, %[x]\n"
+        "mfxer %[result]"
+        : [result]"=r"(result)
+        : [x]"r"(x));
+
+    printf("subfmeo: Resulting XER: 0x%08" PRIX32 "\n", result);
+
+    SetXER(0xFFFFFFFF);
+    asm volatile (
+        "subfzeo 3, %[x]\n"
+        "mfxer %[result]"
+        : [result]"=r"(result)
+        : [x]"r"(x));
+
+    printf("subfzeo: Resulting XER: 0x%08" PRIX32 "\n", result);
+}
+
 void PPCIntegerTests()
 {
+    // Run specialized tests first
+    XEROverflowClearTest();
+
+    printf("General Instruction Test\n");
     printf("ADD Variants\n");
+    OPTEST_3_COMPONENTS("ADD", 0x7FFFFFFF, 1);
+    OPTEST_3_COMPONENTS("ADD", 0x80000000, 1);
     OPTEST_3_COMPONENTS("ADD", 0xFFFFFFFF, 1);
     OPTEST_3_COMPONENTS("ADD", -1, 1);
     OPTEST_3_COMPONENTS("ADD", -1, -1);
     OPTEST_3_COMPONENTS("ADD", 1, 0);
     OPTEST_3_COMPONENTS("ADD", 0, -1);
+    OPTEST_3_COMPONENTS("ADD.", 0x7FFFFFFF, 1);
+    OPTEST_3_COMPONENTS("ADD.", 0x80000000, 1);
     OPTEST_3_COMPONENTS("ADD.", 0xFFFFFFFF, 1);
     OPTEST_3_COMPONENTS("ADD.", -1, 1);
     OPTEST_3_COMPONENTS("ADD.", -1, -1);
     OPTEST_3_COMPONENTS("ADD.", 1, 0);
     OPTEST_3_COMPONENTS("ADD.", 0, -1);
+    OPTEST_3_COMPONENTS("ADDC", 0x7FFFFFFF, 1);
+    OPTEST_3_COMPONENTS("ADDC", 0x80000000, 1);
     OPTEST_3_COMPONENTS("ADDC", 0xFFFFFFFF, 1);
     OPTEST_3_COMPONENTS("ADDC", -1, 1);
     OPTEST_3_COMPONENTS("ADDC", -1, -1);
     OPTEST_3_COMPONENTS("ADDC", 1, 0);
     OPTEST_3_COMPONENTS("ADDC", 0, -1);
+    OPTEST_3_COMPONENTS("ADDC.", 0x7FFFFFFF, 1);
+    OPTEST_3_COMPONENTS("ADDC.", 0x80000000, 1);
     OPTEST_3_COMPONENTS("ADDC.", 0xFFFFFFFF, 1);
     OPTEST_3_COMPONENTS("ADDC.", -1, 1);
     OPTEST_3_COMPONENTS("ADDC.", -1, -1);
     OPTEST_3_COMPONENTS("ADDC.", 1, 0);
     OPTEST_3_COMPONENTS("ADDC.", 0, -1);
+    OPTEST_3_COMPONENTS("ADDCO", 0x7FFFFFFF, 1);
+    OPTEST_3_COMPONENTS("ADDCO", 0x80000000, 1);
     OPTEST_3_COMPONENTS("ADDCO", 0xFFFFFFFF, 1);
     OPTEST_3_COMPONENTS("ADDCO", -1, 1);
     OPTEST_3_COMPONENTS("ADDCO", -1, -1);
     OPTEST_3_COMPONENTS("ADDCO", 1, 0);
     OPTEST_3_COMPONENTS("ADDCO", 0, -1);
+    OPTEST_3_COMPONENTS("ADDCO.", 0x7FFFFFFF, 1);
+    OPTEST_3_COMPONENTS("ADDCO.", 0x80000000, 1);
     OPTEST_3_COMPONENTS("ADDCO.", 0xFFFFFFFF, 1);
     OPTEST_3_COMPONENTS("ADDCO.", -1, 1);
     OPTEST_3_COMPONENTS("ADDCO.", -1, -1);
     OPTEST_3_COMPONENTS("ADDCO.", 1, 0);
     OPTEST_3_COMPONENTS("ADDCO.", 0, -1);
+    OPTEST_3_COMPONENTS("ADDO", 0x7FFFFFFF, 1);
+    OPTEST_3_COMPONENTS("ADDO", 0x80000000, 1);
     OPTEST_3_COMPONENTS("ADDO", 0xFFFFFFFF, 1);
     OPTEST_3_COMPONENTS("ADDO", -1, 1);
     OPTEST_3_COMPONENTS("ADDO", -1, -1);
     OPTEST_3_COMPONENTS("ADDO", 1, 0);
     OPTEST_3_COMPONENTS("ADDO", 0, -1);
+    OPTEST_3_COMPONENTS("ADDO.", 0x7FFFFFFF, 1);
+    OPTEST_3_COMPONENTS("ADDO.", 0x80000000, 1);
     OPTEST_3_COMPONENTS("ADDO.", 0xFFFFFFFF, 1);
     OPTEST_3_COMPONENTS("ADDO.", -1, 1);
     OPTEST_3_COMPONENTS("ADDO.", -1, -1);
     OPTEST_3_COMPONENTS("ADDO.", 1, 0);
     OPTEST_3_COMPONENTS("ADDO.", 0, -1);
+    OPTEST_3_COMPONENTS("ADDE", 0x7FFFFFFF, 1);
+    OPTEST_3_COMPONENTS("ADDE", 0x80000000, 1);
     OPTEST_3_COMPONENTS("ADDE", 0xFFFFFFFF, 1);
     OPTEST_3_COMPONENTS("ADDE", -1, 1);
     OPTEST_3_COMPONENTS("ADDE", -1, -1);
     OPTEST_3_COMPONENTS("ADDE", 1, 0);
     OPTEST_3_COMPONENTS("ADDE", 0, -1);
+    OPTEST_3_COMPONENTS("ADDE.", 0x7FFFFFFF, 1);
+    OPTEST_3_COMPONENTS("ADDE.", 0x80000000, 1);
     OPTEST_3_COMPONENTS("ADDE.", 0xFFFFFFFF, 1);
     OPTEST_3_COMPONENTS("ADDE.", -1, 1);
     OPTEST_3_COMPONENTS("ADDE.", -1, -1);
     OPTEST_3_COMPONENTS("ADDE.", 1, 0);
     OPTEST_3_COMPONENTS("ADDE.", 0, -1);
+    OPTEST_3_COMPONENTS("ADDEO", 0x7FFFFFFF, 1);
+    OPTEST_3_COMPONENTS("ADDEO", 0x80000000, 1);
     OPTEST_3_COMPONENTS("ADDEO", 0xFFFFFFFF, 1);
     OPTEST_3_COMPONENTS("ADDEO", -1, 1);
     OPTEST_3_COMPONENTS("ADDEO", -1, -1);
     OPTEST_3_COMPONENTS("ADDEO", 1, 0);
     OPTEST_3_COMPONENTS("ADDEO", 0, -1);
+    OPTEST_3_COMPONENTS("ADDEO.", 0x7FFFFFFF, 1);
+    OPTEST_3_COMPONENTS("ADDEO.", 0x80000000, 1);
     OPTEST_3_COMPONENTS("ADDEO.", 0xFFFFFFFF, 1);
     OPTEST_3_COMPONENTS("ADDEO.", -1, 1);
     OPTEST_3_COMPONENTS("ADDEO.", -1, -1);
     OPTEST_3_COMPONENTS("ADDEO.", 1, 0);
     OPTEST_3_COMPONENTS("ADDEO.", 0, -1);
+    OPTEST_3_COMPONENTS_IMM("ADDI", 0x7FFFFFFF, 1);
+    OPTEST_3_COMPONENTS_IMM("ADDI", 0x80000000, 1);
     OPTEST_3_COMPONENTS_IMM("ADDI", 0xFFFFFFFF, 1);
     OPTEST_3_COMPONENTS_IMM("ADDI", -1, 1);
     OPTEST_3_COMPONENTS_IMM("ADDI", -1, -1);
     OPTEST_3_COMPONENTS_IMM("ADDI", 1, 0);
     OPTEST_3_COMPONENTS_IMM("ADDI", 0, -1);
+    OPTEST_3_COMPONENTS_IMM("ADDIC", 0x7FFFFFFF, 1);
+    OPTEST_3_COMPONENTS_IMM("ADDIC", 0x80000000, 1);
     OPTEST_3_COMPONENTS_IMM("ADDIC", 0xFFFFFFFF, 1);
     OPTEST_3_COMPONENTS_IMM("ADDIC", -1, 1);
     OPTEST_3_COMPONENTS_IMM("ADDIC", -1, -1);
     OPTEST_3_COMPONENTS_IMM("ADDIC", 1, 0);
     OPTEST_3_COMPONENTS_IMM("ADDIC", 0, -1);
+    OPTEST_3_COMPONENTS_IMM("ADDIS", 0x7FFFFFFF, 1);
+    OPTEST_3_COMPONENTS_IMM("ADDIS", 0x80000000, 1);
     OPTEST_3_COMPONENTS_IMM("ADDIS", 0xFFFFFFFF, 1);
     OPTEST_3_COMPONENTS_IMM("ADDIS", -1, 1);
     OPTEST_3_COMPONENTS_IMM("ADDIS", -1, -1);
     OPTEST_3_COMPONENTS_IMM("ADDIS", 1, 0);
     OPTEST_3_COMPONENTS_IMM("ADDIS", 0, -1);
+    OPTEST_2_COMPONENTS("ADDME", 0x7FFFFFFF);
+    OPTEST_2_COMPONENTS("ADDME", 0x80000000);
     OPTEST_2_COMPONENTS("ADDME", 0xFFFFFFFF);
     OPTEST_2_COMPONENTS("ADDME", -1);
     OPTEST_2_COMPONENTS("ADDME", 1);
     OPTEST_2_COMPONENTS("ADDME", 0);
+    OPTEST_2_COMPONENTS("ADDME.", 0x7FFFFFFF);
+    OPTEST_2_COMPONENTS("ADDME.", 0x80000000);
     OPTEST_2_COMPONENTS("ADDME.", 0xFFFFFFFF);
     OPTEST_2_COMPONENTS("ADDME.", -1);
     OPTEST_2_COMPONENTS("ADDME.", 1);
     OPTEST_2_COMPONENTS("ADDME.", 0);
+    OPTEST_2_COMPONENTS("ADDMEO", 0x7FFFFFFF);
+    OPTEST_2_COMPONENTS("ADDMEO", 0x80000000);
     OPTEST_2_COMPONENTS("ADDMEO", 0xFFFFFFFF);
     OPTEST_2_COMPONENTS("ADDMEO", -1);
     OPTEST_2_COMPONENTS("ADDMEO", 1);
     OPTEST_2_COMPONENTS("ADDMEO", 0);
+    OPTEST_2_COMPONENTS("ADDMEO.", 0x7FFFFFFF)
+    OPTEST_2_COMPONENTS("ADDMEO.", 0x80000000)
     OPTEST_2_COMPONENTS("ADDMEO.", 0xFFFFFFFF);
     OPTEST_2_COMPONENTS("ADDMEO.", -1);
     OPTEST_2_COMPONENTS("ADDMEO.", 1);
     OPTEST_2_COMPONENTS("ADDMEO.", 0);
+    OPTEST_2_COMPONENTS("ADDZE", 0x7FFFFFFF);
+    OPTEST_2_COMPONENTS("ADDZE", 0x80000000);
     OPTEST_2_COMPONENTS("ADDZE", 0xFFFFFFFF);
     OPTEST_2_COMPONENTS("ADDZE", -1);
     OPTEST_2_COMPONENTS("ADDZE", 1);
     OPTEST_2_COMPONENTS("ADDZE", 0);
+    OPTEST_2_COMPONENTS("ADDZE.", 0x7FFFFFFF);
+    OPTEST_2_COMPONENTS("ADDZE.", 0x80000000);
     OPTEST_2_COMPONENTS("ADDZE.", 0xFFFFFFFF);
     OPTEST_2_COMPONENTS("ADDZE.", -1);
     OPTEST_2_COMPONENTS("ADDZE.", 1);
     OPTEST_2_COMPONENTS("ADDZE.", 0);
+    OPTEST_2_COMPONENTS("ADDZEO", 0x7FFFFFFF);
+    OPTEST_2_COMPONENTS("ADDZEO", 0x80000000);
     OPTEST_2_COMPONENTS("ADDZEO", 0xFFFFFFFF);
     OPTEST_2_COMPONENTS("ADDZEO", -1);
     OPTEST_2_COMPONENTS("ADDZEO", 1);
     OPTEST_2_COMPONENTS("ADDZEO", 0);
+    OPTEST_2_COMPONENTS("ADDZEO.", 0x7FFFFFFF);
+    OPTEST_2_COMPONENTS("ADDZEO.", 0x80000000);
     OPTEST_2_COMPONENTS("ADDZEO.", 0xFFFFFFFF);
     OPTEST_2_COMPONENTS("ADDZEO.", -1);
     OPTEST_2_COMPONENTS("ADDZEO.", 1);
