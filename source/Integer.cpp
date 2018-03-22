@@ -170,6 +170,15 @@ static void XEROverflowClearTest()
 
     SetXER(0xFFFFFFFF);
     asm volatile (
+        "nego 3, %[x]\n"
+        "mfxer %[result]"
+        : [result]"=r"(result)
+        : [x]"r"(x));
+
+    printf("nego: Resulting XER: 0x%08" PRIX32 "\n", result);
+
+    SetXER(0xFFFFFFFF);
+    asm volatile (
         "subfo 3, %[x], %[y]\n"
         "mfxer %[result]"
         : [result]"=r"(result)
@@ -212,6 +221,15 @@ static void XEROverflowClearTest()
         : [x]"r"(x));
 
     printf("subfzeo: Resulting XER: 0x%08" PRIX32 "\n", result);
+
+    SetXER(0xFFFFFFFF);
+    asm volatile (
+        "add 3, %[x], %[y]\n"
+        "mfxer %[result]"
+        : [result]"=r"(result)
+        : [x]"r"(x), [y]"r"(y));
+
+    printf("add: Resulting XER: 0x%08" PRIX32 "\n", result);
 }
 
 void PPCIntegerTests()
