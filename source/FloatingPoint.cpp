@@ -26,8 +26,8 @@ static uint32_t GetFPSCR()
     uint64_t i = 0;
     std::memcpy(&i, &d, sizeof(uint64_t));
 
-    // Lower 32 bits are undefined according to the PPC reference.
-    return static_cast<uint32_t>(i >> 32);
+    // High 32 bits are undefined according to the PPC reference.
+    return static_cast<uint32_t>(i);
 }
 
 // Test for a 2-component instruction
