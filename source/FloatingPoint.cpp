@@ -30,6 +30,18 @@ static uint32_t GetFPSCR()
     return static_cast<uint32_t>(i);
 }
 
+static void SetRoundingMode(uint32_t index)
+{
+    if (index == 0)
+        asm volatile ("mtfsb0 30\nmtfsb0 31\n");
+    else if (index == 1)
+        asm volatile ("mtfsb0 30\nmtfsb1 31\n");
+    else if (index == 2)
+        asm volatile ("mtfsb1 30\nmtfsb0 31\n");
+    else if (index == 3)
+        asm volatile ("mtfsb1 30\nmtfsb1 31\n");
+}
+
 // Test for a 2-component instruction
 // e.g. FABS frD, frB
 #define OPTEST_2_COMPONENTS(inst, frA)                                                                  \
@@ -55,14 +67,7 @@ static uint32_t GetFPSCR()
         ClearFPSCR();                                                                                    \
         SetCR(0);                                                                                        \
                                                                                                          \
-        if (i == 0)                                                                                      \
-            asm volatile ("mtfsb0 30\nmtfsb0 31\n");                                                     \
-        else if (i == 1)                                                                                 \
-            asm volatile ("mtfsb0 30\nmtfsb1 31\n");                                                     \
-        else if (i == 2)                                                                                 \
-            asm volatile ("mtfsb1 30\nmtfsb0 31\n");                                                     \
-        else if (i == 3)                                                                                 \
-            asm volatile ("mtfsb1 30\nmtfsb1 31\n");                                                     \
+        SetRoundingMode(i);                                                                              \
                                                                                                          \
         asm volatile (inst " %[out], %[Fra]"                                                             \
             : [out]"=&f"(output)                                                                         \
@@ -84,14 +89,7 @@ static uint32_t GetFPSCR()
         ClearFPSCR();                                                                                             \
         SetCR(0);                                                                                                 \
                                                                                                                   \
-        if (i == 0)                                                                                               \
-            asm volatile ("mtfsb0 30\nmtfsb0 31\n");                                                              \
-        else if (i == 1)                                                                                          \
-            asm volatile ("mtfsb0 30\nmtfsb1 31\n");                                                              \
-        else if (i == 2)                                                                                          \
-            asm volatile ("mtfsb1 30\nmtfsb0 31\n");                                                              \
-        else if (i == 3)                                                                                          \
-            asm volatile ("mtfsb1 30\nmtfsb1 31\n");                                                              \
+        SetRoundingMode(i);                                                                                       \
                                                                                                                   \
         asm volatile (inst " %[out], %[Fra], %[Frb]"                                                              \
             : [out]"=&f"(output)                                                                                  \
@@ -137,14 +135,7 @@ static uint32_t GetFPSCR()
         ClearFPSCR();                                                                                                      \
         SetCR(0);                                                                                                          \
                                                                                                                            \
-        if (i == 0)                                                                                                        \
-            asm volatile ("mtfsb0 30\nmtfsb0 31\n");                                                                       \
-        else if (i == 1)                                                                                                   \
-            asm volatile ("mtfsb0 30\nmtfsb1 31\n");                                                                       \
-        else if (i == 2)                                                                                                   \
-            asm volatile ("mtfsb1 30\nmtfsb0 31\n");                                                                       \
-        else if (i == 3)                                                                                                   \
-            asm volatile ("mtfsb1 30\nmtfsb1 31\n");                                                                       \
+        SetRoundingMode(i);                                                                                                \
                                                                                                                            \
         asm volatile (inst " %[out], %[Fra], %[Frc], %[Frb]"                                                               \
             : [out]"=&f"(output)                                                                                           \
