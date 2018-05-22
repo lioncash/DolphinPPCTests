@@ -42,6 +42,23 @@ static void SetRoundingMode(uint32_t index)
         asm volatile ("mtfsb1 30\nmtfsb1 31\n");
 }
 
+static const char* GetRoundingModeString(uint32_t index)
+{
+    switch (index)
+    {
+    case 0: // Round to nearest
+        return "(RTN)";
+    case 1: // Round to zero
+        return "(RTZ)";
+    case 2: // Round to +inf
+        return "(RTPI)";
+    case 3: // Round to -inf
+        return "(RTNI)";
+    }
+
+    return "Unknown";
+}
+
 // Test for a 2-component instruction
 // e.g. FABS frD, frB
 #define OPTEST_2_COMPONENTS(inst, frA)                                                                  \
@@ -57,47 +74,47 @@ static void SetRoundingMode(uint32_t index)
 }
 
 // Test for a 2-component instruction which tests all rounding modes.
-#define OPTEST_2_COMPONENTS_WITH_ROUND(inst, frA)                                                        \
-{                                                                                                        \
-    uint64_t output;                                                                                     \
-                                                                                                         \
-                                                                                                         \
-    for (int i = 0; i <= 3; i++)                                                                         \
-    {                                                                                                    \
-        ClearFPSCR();                                                                                    \
-        SetCR(0);                                                                                        \
-                                                                                                         \
-        SetRoundingMode(i);                                                                              \
-                                                                                                         \
-        asm volatile (inst " %[out], %[Fra]"                                                             \
-            : [out]"=&f"(output)                                                                         \
-            : [Fra]"f"(frA));                                                                            \
-                                                                                                         \
-        printf("%-8s :: frD 0x%016" PRIX64 " | frA %e | FPSCR: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n", \
-               inst, output, frA, GetFPSCR(), GetCR());                                                  \
-    }                                                                                                    \
+#define OPTEST_2_COMPONENTS_WITH_ROUND(inst, frA)                                                            \
+{                                                                                                            \
+    uint64_t output;                                                                                         \
+                                                                                                             \
+                                                                                                             \
+    for (int i = 0; i <= 3; i++)                                                                             \
+    {                                                                                                        \
+        ClearFPSCR();                                                                                        \
+        SetCR(0);                                                                                            \
+                                                                                                             \
+        SetRoundingMode(i);                                                                                  \
+                                                                                                             \
+        asm volatile (inst " %[out], %[Fra]"                                                                 \
+            : [out]"=&f"(output)                                                                             \
+            : [Fra]"f"(frA));                                                                                \
+                                                                                                             \
+        printf("%-8s %6s :: frD 0x%016" PRIX64 " | frA %e | FPSCR: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n", \
+               inst, GetRoundingModeString(i), output, frA, GetFPSCR(), GetCR());                            \
+    }                                                                                                        \
 }
 
 // Test for a 3-component instruction with all rounding modes.
 // e.g. FADDS frD, frA, frB
-#define OPTEST_3_COMPONENTS_WITH_ROUND(inst, frA, frB)                                                            \
-{                                                                                                                 \
-    uint64_t output;                                                                                              \
-                                                                                                                  \
-    for (int i = 0; i <= 3; i++)                                                                                  \
-    {                                                                                                             \
-        ClearFPSCR();                                                                                             \
-        SetCR(0);                                                                                                 \
-                                                                                                                  \
-        SetRoundingMode(i);                                                                                       \
-                                                                                                                  \
-        asm volatile (inst " %[out], %[Fra], %[Frb]"                                                              \
-            : [out]"=&f"(output)                                                                                  \
-            : [Fra]"f"(frA), [Frb]"f"(frB));                                                                      \
-                                                                                                                  \
-        printf("%-8s :: frD 0x%016" PRIX64 " | frA %e | frB %e | FPSCR: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n", \
-               inst, output, frA, frB, GetFPSCR(), GetCR());                                                      \
-    }                                                                                                             \
+#define OPTEST_3_COMPONENTS_WITH_ROUND(inst, frA, frB)                                                                \
+{                                                                                                                     \
+    uint64_t output;                                                                                                  \
+                                                                                                                      \
+    for (int i = 0; i <= 3; i++)                                                                                      \
+    {                                                                                                                 \
+        ClearFPSCR();                                                                                                 \
+        SetCR(0);                                                                                                     \
+                                                                                                                      \
+        SetRoundingMode(i);                                                                                           \
+                                                                                                                      \
+        asm volatile (inst " %[out], %[Fra], %[Frb]"                                                                  \
+            : [out]"=&f"(output)                                                                                      \
+            : [Fra]"f"(frA), [Frb]"f"(frB));                                                                          \
+                                                                                                                      \
+        printf("%-8s %6s :: frD 0x%016" PRIX64 " | frA %e | frB %e | FPSCR: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n", \
+               inst, GetRoundingModeString(i), output, frA, frB, GetFPSCR(), GetCR());                                \
+    }                                                                                                                 \
 }
 
 // Used for testing CMP instructions.
@@ -126,24 +143,24 @@ static void SetRoundingMode(uint32_t index)
 
 // Test for a 4-component instruction with all rounding modes.
 // e.g. FMADD frD, frA, frC, frB
-#define OPTEST_4_COMPONENTS_WITH_ROUND(inst, frA, frC, frB)                                                                \
-{                                                                                                                          \
-    uint64_t output;                                                                                                       \
-                                                                                                                           \
-    for (int i = 0; i <= 3; i++)                                                                                           \
-    {                                                                                                                      \
-        ClearFPSCR();                                                                                                      \
-        SetCR(0);                                                                                                          \
-                                                                                                                           \
-        SetRoundingMode(i);                                                                                                \
-                                                                                                                           \
-        asm volatile (inst " %[out], %[Fra], %[Frc], %[Frb]"                                                               \
-            : [out]"=&f"(output)                                                                                           \
-            : [Fra]"f"(frA), [Frc]"f"(frC), [Frb]"f"(frB));                                                                \
-                                                                                                                           \
-        printf("%-8s :: frD 0x%016" PRIX64 " | frA %e | frC %e | frB %e | FPSCR: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n", \
-               inst, output, frA, frC, frB, GetFPSCR(), GetCR());                                                          \
-    }                                                                                                                      \
+#define OPTEST_4_COMPONENTS_WITH_ROUND(inst, frA, frC, frB)                                                                    \
+{                                                                                                                              \
+    uint64_t output;                                                                                                           \
+                                                                                                                               \
+    for (int i = 0; i <= 3; i++)                                                                                               \
+    {                                                                                                                          \
+        ClearFPSCR();                                                                                                          \
+        SetCR(0);                                                                                                              \
+                                                                                                                               \
+        SetRoundingMode(i);                                                                                                    \
+                                                                                                                               \
+        asm volatile (inst " %[out], %[Fra], %[Frc], %[Frb]"                                                                   \
+            : [out]"=&f"(output)                                                                                               \
+            : [Fra]"f"(frA), [Frc]"f"(frC), [Frb]"f"(frB));                                                                    \
+                                                                                                                               \
+        printf("%-8s %6s :: frD 0x%016" PRIX64 " | frA %e | frC %e | frB %e | FPSCR: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n", \
+               inst, GetRoundingModeString(i), output, frA, frC, frB, GetFPSCR(), GetCR());                                    \
+    }                                                                                                                          \
 }
 
 // Tests if floating point comparison functions (FCMPO/FCMPU) preserve the class bit when setting the FPCC bits.
