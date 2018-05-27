@@ -72,22 +72,31 @@ static void CleanTestState()
 
 // Test for a 2-component instruction
 // e.g. FABS frD, frB
-#define OPTEST_2_COMPONENTS(inst, frA)                                                                  \
-{                                                                                                       \
-    uint64_t output;                                                                                    \
-                                                                                                        \
-    CleanTestState();                                                                                   \
-    asm volatile (inst " %[out], %[Fra]": [out]"=&f"(output) : [Fra]"f"(frA));                          \
-                                                                                                        \
-    printf("%-8s :: frD 0x%016" PRIX64 " | frA %e | FPSCR: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n",    \
-           inst, output, frA, GetFPSCR(), GetCR());                                                     \
+#define OPTEST_2_COMPONENTS(inst, frA)                                                                      \
+{                                                                                                           \
+    uint64_t output;                                                                                        \
+                                                                                                            \
+    CleanTestState();                                                                                       \
+    asm volatile (inst " %[out], %[Fra]": [out]"=&f"(output) : [Fra]"f"(frA));                              \
+                                                                                                            \
+    printf("%-8s :: frD 0x%016" PRIX64 " | frA %e | FPSCR: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n",        \
+           inst, output, frA, GetFPSCR(), GetCR());                                                         \
+                                                                                                            \
+    /* Test with invalid exceptions enabled */                                                              \
+    CleanTestState();                                                                                       \
+    EnableInvalidOperationExceptions();                                                                     \
+    asm volatile(                                                                                           \
+        "xor %[out], %[out], %[out]\n"                                                                      \
+        inst " %[out], %[Fra]": [out]"=&f"(output) : [Fra]"f"(frA));                                        \
+                                                                                                            \
+    printf("%-8s %6s :: frD 0x%016" PRIX64 " | frA %e | FPSCR: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n",    \
+           inst, "(VE)", output, frA, GetFPSCR(), GetCR());                                                 \
 }
 
 // Test for a 2-component instruction which tests all rounding modes.
 #define OPTEST_2_COMPONENTS_WITH_ROUND(inst, frA)                                                            \
 {                                                                                                            \
     uint64_t output;                                                                                         \
-                                                                                                             \
                                                                                                              \
     for (int i = 0; i <= 3; i++)                                                                             \
     {                                                                                                        \
@@ -102,6 +111,16 @@ static void CleanTestState()
         printf("%-8s %6s :: frD 0x%016" PRIX64 " | frA %e | FPSCR: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n", \
                inst, GetRoundingModeString(i), output, frA, GetFPSCR(), GetCR());                            \
     }                                                                                                        \
+                                                                                                             \
+    /* Test with invalid exceptions enabled */                                                               \
+    CleanTestState();                                                                                        \
+    EnableInvalidOperationExceptions();                                                                      \
+    asm volatile(                                                                                            \
+        "xor %[out], %[out], %[out]\n"                                                                       \
+        inst " %[out], %[Fra]": [out]"=&f"(output) : [Fra]"f"(frA));                                         \
+                                                                                                             \
+    printf("%-8s %6s :: frD 0x%016" PRIX64 " | frA %e | FPSCR: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n",     \
+           inst, "(VE)", output, frA, GetFPSCR(), GetCR());                                                  \
 }
 
 // Test for a 3-component instruction with all rounding modes.
