@@ -77,7 +77,7 @@
     SetCR(0);                                                                                                                                                                 \
     SetXER(0);                                                                                                                                                                \
     asm volatile (inst " %[out], %[Rs], %[Sh], %[Mb], %[Me]"                                                                                                                  \
-        : [out]"+&r"(output)                                                                                                                                                  \
+        : [out]"=&r"(output)                                                                                                                                                  \
         : [Rs]"r"(rS), [Sh]"r"(SH), [Mb]"r"(MB), [Me]"r"(ME));                                                                                                                \
                                                                                                                                                                               \
     printf("%-8s :: rD 0x%08" PRIX32 " | rS 0x%08" PRIX32 " | SH 0x%08" PRIX32 " | MB: 0x%08" PRIX32 " | ME: 0x%08" PRIX32 " | XER: 0x%08" PRIX32 " | CR: 0x%08" PRIX32 "\n", \
