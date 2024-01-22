@@ -44,6 +44,12 @@ static const devoptab_t dotab_file = {
     nullptr,
     nullptr,
     nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
     nullptr
 };
 
