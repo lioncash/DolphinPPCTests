@@ -1,15 +1,23 @@
 #include <cstdio>
+#ifdef MACOS
+#else
 #include <fat.h>
 #include <gccore.h>
 #include <sys/iosupport.h>
+#endif
 
 #include "Tests.h"
 #include "Utils.h"
 
+#ifdef MACOS
+#else
 static void* xfb = nullptr;
 static GXRModeObj* rmode = nullptr;
+#endif
 static FILE* f = nullptr;
 
+#ifdef MACOS
+#else
 static ssize_t file_write(_reent*, void*, const char* ptr, size_t len)
 {
     if (len > 1)
@@ -44,12 +52,21 @@ static const devoptab_t dotab_file = {
     nullptr,
     nullptr,
     nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
     nullptr
 };
+#endif
 
 // Initializes various system devices/capabilities.
 static void Initialize()
 {
+#ifdef MACOS
+#else
     VIDEO_Init();
 
     if (!fatInitDefault())
@@ -72,6 +89,7 @@ static void Initialize()
         VIDEO_WaitVSync();
 
     xfb = framebuffer;
+#endif
 }
 
 static bool TryOpenFile(const char* path)
@@ -92,7 +110,10 @@ int main()
     printf("Dolphin PPC Instruction Tests\n");
     printf("Will exit when done.\n");
 
+#ifdef MACOS
+#else
     devoptab_list[STD_OUT] = &dotab_file;
+#endif
 
     // Line buffered
     setvbuf(stdout, nullptr, _IOLBF, 0);
