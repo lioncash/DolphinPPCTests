@@ -25,7 +25,7 @@ INCLUDES	:=
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS   = -g -O2 -Wall -Wextra $(MACHDEP) $(INCLUDE)
+CFLAGS   = -save-temps -fno-var-tracking-assignments -g -O2 -Wall -Wextra $(MACHDEP) $(INCLUDE)
 CXXFLAGS = $(CFLAGS) -std=gnu++1z -D_GNU_SOURCE
 
 LDFLAGS  = -g $(MACHDEP) -Wl,-Map,$(notdir $@).map
